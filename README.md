@@ -39,6 +39,31 @@ npm run dev
 
 Frontend URL: `http://localhost:5173`
 
+## Docker Deployment
+
+Run the full stack (MySQL + backend + frontend):
+
+```bash
+docker compose up --build
+```
+
+Services:
+- Frontend: `http://localhost:5173`
+- Backend API: `http://localhost:8080/api`
+- MySQL: `localhost:3307` (inside compose network it is `db:3306`)
+
+Stop services:
+
+```bash
+docker compose down
+```
+
+Stop and remove DB volume:
+
+```bash
+docker compose down -v
+```
+
 ## Implemented Features
 
 - Register animal owner (admin only)
