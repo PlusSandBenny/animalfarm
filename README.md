@@ -7,7 +7,7 @@ Full-stack starter for managing:
 - Pigs
 
 Tech stack:
-- Backend: Java 21 + Spring Boot
+- Backend: Java 17 + Spring Boot
 - Database: MySQL
 - Frontend: React + Vite
 
@@ -15,6 +15,61 @@ Tech stack:
 
 - `backend` Spring Boot API
 - `frontend` React client
+
+## How To Run
+
+### Option 1: Run with Docker (recommended)
+
+1. Install Docker Desktop.
+2. From the project root, run:
+
+```bash
+docker compose up --build
+```
+
+3. Open:
+- Frontend: `http://localhost:5173`
+- Backend API: `http://localhost:8080/api`
+
+Stop:
+
+```bash
+docker compose down
+```
+
+Reset everything including database volume:
+
+```bash
+docker compose down -v
+```
+
+### Option 2: Run locally (without Docker)
+
+Prerequisites:
+- Java 17+
+- Maven 3.9+
+- Node.js 20+
+- MySQL 8+
+
+1. Start MySQL and create/update credentials in `backend/src/main/resources/application.yml`.
+2. Start backend:
+
+```bash
+cd backend
+mvn spring-boot:run
+```
+
+3. In a new terminal, start frontend:
+
+```bash
+cd frontend
+npm install
+npm run dev
+```
+
+4. Open:
+- Frontend: `http://localhost:5173`
+- Backend API: `http://localhost:8080/api`
 
 ## Backend Setup
 
@@ -41,28 +96,10 @@ Frontend URL: `http://localhost:5173`
 
 ## Docker Deployment
 
-Run the full stack (MySQL + backend + frontend):
-
-```bash
-docker compose up --build
-```
-
-Services:
+Services in compose:
 - Frontend: `http://localhost:5173`
 - Backend API: `http://localhost:8080/api`
 - MySQL: `localhost:3307` (inside compose network it is `db:3306`)
-
-Stop services:
-
-```bash
-docker compose down
-```
-
-Stop and remove DB volume:
-
-```bash
-docker compose down -v
-```
 
 ## Implemented Features
 
