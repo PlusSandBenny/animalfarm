@@ -43,6 +43,15 @@ public class ReportController {
         return pdf("parent-vs-animal-" + parentId + ".pdf", reportService.parentVsAnimalPdf(parentId));
     }
 
+    @GetMapping("/owners")
+    public ResponseEntity<byte[]> ownersList(HttpServletRequest httpRequest) {
+        AuthSession session = AuthContext.require(httpRequest);
+        if (session.role() != ActorRole.ADMIN) {
+            throw new ApiException("Only admin can generate this report.");
+        }
+        return pdf("owners-list.pdf", reportService.ownersListPdf());
+    }
+
     @GetMapping("/owner/{ownerId}")
     public ResponseEntity<byte[]> ownerReport(@PathVariable Long ownerId, HttpServletRequest httpRequest) {
         AuthSession session = AuthContext.require(httpRequest);

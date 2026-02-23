@@ -131,6 +131,7 @@ export const api = {
     let path = `/reports/owner/${value}`;
     if (type === "ownerVsAnimal") path = `/reports/owner-vs-animal?ownerId=${value}`;
     if (type === "parentVsAnimal") path = `/reports/parent-vs-animal?parentId=${value}`;
+    if (type === "ownersList") path = "/reports/owners";
     return request(path);
   }
 };

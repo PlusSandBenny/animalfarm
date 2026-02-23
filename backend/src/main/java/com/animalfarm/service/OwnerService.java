@@ -10,6 +10,7 @@ import com.animalfarm.repository.OwnerRepository;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import java.util.List;
 
 @Service
 public class OwnerService {
@@ -54,5 +55,9 @@ public class OwnerService {
     public Owner getOwner(Long ownerId) {
         return ownerRepository.findById(ownerId)
                 .orElseThrow(() -> new ApiException("Owner not found: " + ownerId));
+    }
+
+    public List<Owner> listOwners() {
+        return ownerRepository.findAll();
     }
 }
