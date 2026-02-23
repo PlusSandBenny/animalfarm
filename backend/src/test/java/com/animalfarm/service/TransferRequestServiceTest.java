@@ -70,7 +70,7 @@ class TransferRequestServiceTest {
 
         when(transferRequestRepository.findById(5L)).thenReturn(Optional.of(request));
 
-        transferRequestService.approve(5L, new AuthSession(1L, "admin", ActorRole.ADMIN, null));
+        transferRequestService.approve(5L, new AuthSession(1L, "admin", ActorRole.ADMIN, null, false));
 
         verify(animalService).transferAnimals(any(), any());
         assertEquals(TransferStatus.APPROVED, request.getStatus());
@@ -79,7 +79,7 @@ class TransferRequestServiceTest {
     @Test
     void reject_requiresAdminRole() {
         ApiException ex = assertThrows(ApiException.class, () ->
-                transferRequestService.reject(3L, new AuthSession(2L, "owner", ActorRole.OWNER, 1L)));
+                transferRequestService.reject(3L, new AuthSession(2L, "owner", ActorRole.OWNER, 1L, false)));
 
         assertEquals("This action requires ADMIN role.", ex.getMessage());
     }

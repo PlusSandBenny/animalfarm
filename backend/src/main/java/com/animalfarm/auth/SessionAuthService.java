@@ -84,7 +84,27 @@ public class SessionAuthService {
         String role = claims.get("role", String.class);
         Number ownerIdNum = claims.get("ownerId", Number.class);
         Long ownerId = ownerIdNum != null ? ownerIdNum.longValue() : null;
-        return new AuthSession(userId, username, com.animalfarm.model.ActorRole.valueOf(role), ownerId);
+        Boolean mustChangePassword = claims.get("mustChangePassword", Boolean.class);
+        return new AuthSession(
+                userId,
+                username,
+                com.animalfarm.model.ActorRole.valueOf(role),
+                ownerId,
+                mustChangePassword != null && mustChangePassword
+        );
+    }
+
+    @Transactional
+    public LoginResponse changePassword(String accessToken, ChangePasswordRequest request) {
+        AuthSession session = requireSession(accessToken);
+        AppUser user = appUserRepository.findById(session.userId())
+                .orElseThrow(() -> new UnauthorizedException("User not found."));
+        if (!passwordEncoder.matches(request.currentPassword(), user.getPasswordHash())) {
+            throw new UnauthorizedException("Current password is incorrect.");
+        }
+        user.setPasswordHash(passwordEncoder.encode(request.newPassword()));
+        user.setForcePasswordReset(false);
+        return buildLoginResponse(user);
     }
 
     private Claims parseJwtOrThrow(String token) {
@@ -100,7 +120,8 @@ public class SessionAuthService {
                 user.getId(),
                 user.getUsername(),
                 user.getRole(),
-                user.getOwner() != null ? user.getOwner().getId() : null
+                user.getOwner() != null ? user.getOwner().getId() : null,
+                user.isForcePasswordReset()
         );
         String refreshToken = jwtTokenService.generateRefreshToken(user.getId());
         RefreshToken rt = new RefreshToken();
@@ -115,6 +136,7 @@ public class SessionAuthService {
                 user.getUsername(),
                 user.getRole(),
                 user.getOwner() != null ? user.getOwner().getId() : null,
+                user.isForcePasswordReset(),
                 jwtTokenService.getAccessTokenMinutes() * 60
         );
     }

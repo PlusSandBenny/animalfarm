@@ -8,6 +8,7 @@ public record LoginResponse(
         String username,
         ActorRole role,
         Long ownerId,
+        boolean mustChangePassword,
         long accessTokenExpiresInSeconds
 ) {
 }

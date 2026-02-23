@@ -18,7 +18,8 @@ function setSession(data) {
   localStorage.setItem(USER_KEY, JSON.stringify({
     username: data.username,
     role: data.role,
-    ownerId: data.ownerId
+    ownerId: data.ownerId,
+    mustChangePassword: Boolean(data.mustChangePassword)
   }));
 }
 
@@ -109,6 +110,14 @@ export const authApi = {
     } finally {
       clearSession();
     }
+  },
+  async changePassword(currentPassword, newPassword) {
+    const data = await request("/auth/change-password", {
+      method: "POST",
+      body: JSON.stringify({ currentPassword, newPassword })
+    });
+    setSession(data);
+    return data;
   },
   currentUser() {
     const raw = localStorage.getItem(USER_KEY);

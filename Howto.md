@@ -102,7 +102,10 @@ Steps:
 4. Update owner details and click **Save Owner**.
 
 Note:
-- Username is displayed as read-only and cannot be changed.
+- If owner already has a username, it is read-only and cannot be changed.
+- Admin can set a temporary password for existing owner usernames.
+- If owner has no username yet, admin must set username and temporary password.
+- When admin sets/edits temporary password, owner is forced to change password at next login.
 
 ## 5. Owner User Guide
 

@@ -4,6 +4,7 @@ C:\Users\BenOA\CodexWorkDir\Testproject\animalfarm\backend\src\main\java\com\ani
 C:\Users\BenOA\CodexWorkDir\Testproject\animalfarm\backend\src\main\java\com\animalfarm\auth\AuthController.java
 C:\Users\BenOA\CodexWorkDir\Testproject\animalfarm\backend\src\main\java\com\animalfarm\auth\AuthInterceptor.java
 C:\Users\BenOA\CodexWorkDir\Testproject\animalfarm\backend\src\main\java\com\animalfarm\auth\AuthSession.java
+C:\Users\BenOA\CodexWorkDir\Testproject\animalfarm\backend\src\main\java\com\animalfarm\auth\ChangePasswordRequest.java
 C:\Users\BenOA\CodexWorkDir\Testproject\animalfarm\backend\src\main\java\com\animalfarm\auth\JwtTokenService.java
 C:\Users\BenOA\CodexWorkDir\Testproject\animalfarm\backend\src\main\java\com\animalfarm\auth\LoginRequest.java
 C:\Users\BenOA\CodexWorkDir\Testproject\animalfarm\backend\src\main\java\com\animalfarm\auth\LoginResponse.java

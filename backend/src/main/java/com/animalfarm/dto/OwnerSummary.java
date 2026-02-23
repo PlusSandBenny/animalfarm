@@ -9,7 +9,8 @@ public record OwnerSummary(
         String email,
         String phoneNumber,
         String address,
-        String username
+        String username,
+        boolean credentialsCreated
 ) {
     public static OwnerSummary of(Owner owner, String username) {
         return new OwnerSummary(
@@ -19,7 +20,8 @@ public record OwnerSummary(
                 owner.getEmail(),
                 owner.getPhoneNumber(),
                 owner.getAddress(),
-                username
+                username,
+                username != null && !username.isBlank()
         );
     }
 }

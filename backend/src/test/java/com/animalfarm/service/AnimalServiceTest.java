@@ -72,7 +72,7 @@ class AnimalServiceTest {
         var result = animalService.transferAnimals(new TransferAnimalsRequest(
                 2L,
                 List.of(10L)
-        ), new AuthSession(1L, "owner1", ActorRole.OWNER, 1L));
+        ), new AuthSession(1L, "owner1", ActorRole.OWNER, 1L, false));
 
         assertEquals(1, result.size());
         assertEquals(2L, animal.getOwner().getId());
@@ -91,7 +91,7 @@ class AnimalServiceTest {
         ApiException ex = assertThrows(ApiException.class, () -> animalService.transferAnimals(new TransferAnimalsRequest(
                 2L,
                 List.of(11L)
-        ), new AuthSession(2L, "owner2", ActorRole.OWNER, 99L)));
+        ), new AuthSession(2L, "owner2", ActorRole.OWNER, 99L, false)));
 
         assertEquals("Transfer denied. You are not owner of animal id A-011", ex.getMessage());
     }
@@ -99,7 +99,7 @@ class AnimalServiceTest {
     @Test
     void sellAnimal_requiresAdminRole() {
         ApiException ex = assertThrows(ApiException.class, () ->
-                animalService.sellAnimalToMarket(12L, new AuthSession(1L, "owner1", ActorRole.OWNER, 1L)));
+                animalService.sellAnimalToMarket(12L, new AuthSession(1L, "owner1", ActorRole.OWNER, 1L, false)));
         assertEquals("This action requires ADMIN role.", ex.getMessage());
     }
 

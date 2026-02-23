@@ -37,6 +37,7 @@ public class AdminBootstrap implements CommandLineRunner {
         admin.setPasswordHash(passwordEncoder.encode(adminPassword));
         admin.setRole(ActorRole.ADMIN);
         admin.setOwner(null);
+        admin.setForcePasswordReset(false);
         appUserRepository.save(admin);
     }
 }

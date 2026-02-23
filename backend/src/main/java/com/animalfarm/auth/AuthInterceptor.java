@@ -31,6 +31,9 @@ public class AuthInterceptor implements HandlerInterceptor {
         }
         String token = authorization.substring("Bearer ".length()).trim();
         AuthSession session = sessionAuthService.requireSession(token);
+        if (session.mustChangePassword()) {
+            throw new UnauthorizedException("Password reset required. Use /api/auth/change-password.");
+        }
         request.setAttribute(AUTH_SESSION_ATTR, session);
         return true;
     }

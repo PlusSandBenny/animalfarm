@@ -50,6 +50,7 @@ public class OwnerService {
         user.setPasswordHash(passwordEncoder.encode(request.password()));
         user.setRole(ActorRole.OWNER);
         user.setOwner(savedOwner);
+        user.setForcePasswordReset(true);
         appUserRepository.save(user);
         return savedOwner;
     }
@@ -86,13 +87,40 @@ public class OwnerService {
         owner.setEmail(request.email());
         owner.setPhoneNumber(request.phoneNumber());
         owner.setAddress(request.address());
+        AppUser user = appUserRepository.findByOwnerId(ownerId).orElse(null);
+        String requestedUsername = request.username() != null ? request.username().trim() : "";
+        String requestedTempPassword = request.temporaryPassword() != null ? request.temporaryPassword().trim() : "";
+
+        if (user == null) {
+            if (requestedUsername.isEmpty() || requestedTempPassword.isEmpty()) {
+                throw new ApiException("Owner has no username. Provide username and temporaryPassword.");
+            }
+            if (appUserRepository.existsByUsername(requestedUsername)) {
+                throw new ApiException("Username already exists: " + requestedUsername);
+            }
+            AppUser newUser = new AppUser();
+            newUser.setUsername(requestedUsername);
+            newUser.setPasswordHash(passwordEncoder.encode(requestedTempPassword));
+            newUser.setRole(ActorRole.OWNER);
+            newUser.setOwner(owner);
+            newUser.setForcePasswordReset(true);
+            appUserRepository.save(newUser);
+        } else {
+            if (!requestedUsername.isEmpty() && !requestedUsername.equals(user.getUsername())) {
+                throw new ApiException("Username cannot be changed for existing owner account.");
+            }
+            if (!requestedTempPassword.isEmpty()) {
+                user.setPasswordHash(passwordEncoder.encode(requestedTempPassword));
+                user.setForcePasswordReset(true);
+            }
+        }
         return toSummary(owner);
     }
 
     private OwnerSummary toSummary(Owner owner) {
         String username = appUserRepository.findByOwnerId(owner.getId())
                 .map(AppUser::getUsername)
-                .orElse("N/A");
+                .orElse(null);
         return OwnerSummary.of(owner, username);
     }
 }

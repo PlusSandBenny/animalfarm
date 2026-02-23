@@ -84,6 +84,8 @@ Authentication model:
   - username: `${APP_AUTH_ADMIN_USERNAME:admin}`
   - password: `${APP_AUTH_ADMIN_PASSWORD:admin123}`
 - Admin creates owner profile and owner login credentials together.
+- Admin can set credentials later for owners that do not yet have usernames.
+- If admin sets/resets an owner password, owner must change password at next login.
 
 ### Option 3: Run with Vagrant (auto-config + auto-deploy)
 

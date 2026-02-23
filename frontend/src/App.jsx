@@ -66,6 +66,54 @@ function LoginPage({ onLogin }) {
   );
 }
 
+function ForcePasswordResetPage({ session, onPasswordChanged, onLogout }) {
+  const [currentPassword, setCurrentPassword] = useState("");
+  const [newPassword, setNewPassword] = useState("");
+  const [confirmPassword, setConfirmPassword] = useState("");
+  const [message, setMessage] = useState("");
+  const [error, setError] = useState("");
+  const [loading, setLoading] = useState(false);
+
+  async function submit(e) {
+    e.preventDefault();
+    setError("");
+    setMessage("");
+    if (newPassword !== confirmPassword) {
+      setError("New password and confirm password do not match.");
+      return;
+    }
+    setLoading(true);
+    try {
+      const updatedSession = await authApi.changePassword(currentPassword, newPassword);
+      setMessage("Password changed successfully.");
+      onPasswordChanged(updatedSession);
+    } catch (err) {
+      setError(err.message);
+    } finally {
+      setLoading(false);
+    }
+  }
+
+  return (
+    <div className="page narrow">
+      <header className="hero">
+        <h1>Password Reset Required</h1>
+        <p>{session.username}, update your temporary password to continue.</p>
+      </header>
+      <form className="card login" onSubmit={submit}>
+        <h2>Change Password</h2>
+        <input type="password" placeholder="Current password" value={currentPassword} onChange={(e) => setCurrentPassword(e.target.value)} required />
+        <input type="password" placeholder="New password" value={newPassword} onChange={(e) => setNewPassword(e.target.value)} required />
+        <input type="password" placeholder="Confirm new password" value={confirmPassword} onChange={(e) => setConfirmPassword(e.target.value)} required />
+        <button type="submit" disabled={loading}>{loading ? "Saving..." : "Save Password"}</button>
+        <button type="button" onClick={onLogout}>Logout</button>
+      </form>
+      {message && <div className="notice">{message}</div>}
+      {error && <div className="notice error">{error}</div>}
+    </div>
+  );
+}
+
 function AdminPage({ session, onLogout }) {
   const [ownerForm, setOwnerForm] = useState(initialOwner);
   const [animalForm, setAnimalForm] = useState(initialAnimal);
@@ -151,12 +199,14 @@ function AdminPage({ session, onLogout }) {
   function startEditOwner(owner) {
     setEditingOwner({
       id: owner.id,
-      username: owner.username,
+      username: owner.username || "",
+      hasCredentials: owner.credentialsCreated,
       firstName: owner.firstName,
       lastName: owner.lastName,
       email: owner.email,
       phoneNumber: owner.phoneNumber,
-      address: owner.address
+      address: owner.address,
+      temporaryPassword: ""
     });
   }
 
@@ -169,7 +219,9 @@ function AdminPage({ session, onLogout }) {
         lastName: editingOwner.lastName,
         email: editingOwner.email,
         phoneNumber: editingOwner.phoneNumber,
-        address: editingOwner.address
+        address: editingOwner.address,
+        username: editingOwner.username || null,
+        temporaryPassword: editingOwner.temporaryPassword || null
       });
       const results = await api.searchOwners({
         ownerId: ownerSearch.ownerId.trim(),
@@ -293,7 +345,7 @@ function AdminPage({ session, onLogout }) {
             {ownerResults.map((o) => (
               <tr key={o.id}>
                 <td>{o.id}</td>
-                <td>{o.username}</td>
+                <td>{o.username || "Not set"}</td>
                 <td>{o.firstName} {o.lastName}</td>
                 <td>{o.email}</td>
                 <td>{o.phoneNumber}</td>
@@ -309,12 +361,28 @@ function AdminPage({ session, onLogout }) {
           <h2>Edit Owner</h2>
           <form className="grid" onSubmit={onSaveOwner}>
             <input value={editingOwner.id} readOnly />
-            <input value={editingOwner.username} readOnly />
+            {editingOwner.hasCredentials ? (
+              <input value={editingOwner.username} readOnly />
+            ) : (
+              <input
+                placeholder="Set username"
+                value={editingOwner.username}
+                onChange={(e) => setEditingOwner({ ...editingOwner, username: e.target.value })}
+                required
+              />
+            )}
             <input value={editingOwner.firstName} onChange={(e) => setEditingOwner({ ...editingOwner, firstName: e.target.value })} required />
             <input value={editingOwner.lastName} onChange={(e) => setEditingOwner({ ...editingOwner, lastName: e.target.value })} required />
             <input type="email" value={editingOwner.email} onChange={(e) => setEditingOwner({ ...editingOwner, email: e.target.value })} required />
             <input value={editingOwner.phoneNumber} onChange={(e) => setEditingOwner({ ...editingOwner, phoneNumber: e.target.value })} required />
             <input value={editingOwner.address} onChange={(e) => setEditingOwner({ ...editingOwner, address: e.target.value })} required />
+            <input
+              type="password"
+              placeholder={editingOwner.hasCredentials ? "Set temporary password (optional)" : "Set temporary password"}
+              value={editingOwner.temporaryPassword}
+              onChange={(e) => setEditingOwner({ ...editingOwner, temporaryPassword: e.target.value })}
+              required={!editingOwner.hasCredentials}
+            />
             <button type="submit">Save Owner</button>
           </form>
         </section>
@@ -463,6 +531,10 @@ export default function App() {
 
   if (!session) {
     return <LoginPage onLogin={setSession} />;
+  }
+
+  if (session.mustChangePassword) {
+    return <ForcePasswordResetPage session={session} onPasswordChanged={setSession} onLogout={logout} />;
   }
 
   if (session.role === "ADMIN") {

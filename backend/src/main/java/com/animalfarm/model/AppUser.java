@@ -33,6 +33,9 @@ public class AppUser {
     @JoinColumn(name = "owner_id")
     private Owner owner;
 
+    @Column(nullable = false)
+    private boolean forcePasswordReset;
+
     public Long getId() {
         return id;
     }
@@ -67,5 +70,13 @@ public class AppUser {
 
     public void setOwner(Owner owner) {
         this.owner = owner;
+    }
+
+    public boolean isForcePasswordReset() {
+        return forcePasswordReset;
+    }
+
+    public void setForcePasswordReset(boolean forcePasswordReset) {
+        this.forcePasswordReset = forcePasswordReset;
     }
 }

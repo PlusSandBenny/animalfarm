@@ -31,7 +31,7 @@ public class JwtTokenService {
         this.refreshTokenDays = refreshTokenDays;
     }
 
-    public String generateAccessToken(Long userId, String username, ActorRole role, Long ownerId) {
+    public String generateAccessToken(Long userId, String username, ActorRole role, Long ownerId, boolean mustChangePassword) {
         Instant now = Instant.now();
         Instant expiry = now.plusSeconds(accessTokenMinutes * 60);
         return Jwts.builder()
@@ -39,6 +39,7 @@ public class JwtTokenService {
                 .claim("username", username)
                 .claim("role", role.name())
                 .claim("ownerId", ownerId)
+                .claim("mustChangePassword", mustChangePassword)
                 .claim("typ", "access")
                 .issuedAt(Date.from(now))
                 .expiration(Date.from(expiry))

@@ -8,6 +8,8 @@ public record OwnerUpdateRequest(
         @NotBlank String lastName,
         @Email String email,
         @NotBlank String phoneNumber,
-        @NotBlank String address
+        @NotBlank String address,
+        String username,
+        String temporaryPassword
 ) {
 }
