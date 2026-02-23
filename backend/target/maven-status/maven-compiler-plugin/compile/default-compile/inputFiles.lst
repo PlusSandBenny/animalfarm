@@ -20,6 +20,8 @@ C:\Users\BenOA\CodexWorkDir\Testproject\animalfarm\backend\src\main\java\com\ani
 C:\Users\BenOA\CodexWorkDir\Testproject\animalfarm\backend\src\main\java\com\animalfarm\dto\AnimalRequest.java
 C:\Users\BenOA\CodexWorkDir\Testproject\animalfarm\backend\src\main\java\com\animalfarm\dto\AnimalSummary.java
 C:\Users\BenOA\CodexWorkDir\Testproject\animalfarm\backend\src\main\java\com\animalfarm\dto\OwnerRequest.java
+C:\Users\BenOA\CodexWorkDir\Testproject\animalfarm\backend\src\main\java\com\animalfarm\dto\OwnerSummary.java
+C:\Users\BenOA\CodexWorkDir\Testproject\animalfarm\backend\src\main\java\com\animalfarm\dto\OwnerUpdateRequest.java
 C:\Users\BenOA\CodexWorkDir\Testproject\animalfarm\backend\src\main\java\com\animalfarm\dto\TransferAnimalsRequest.java
 C:\Users\BenOA\CodexWorkDir\Testproject\animalfarm\backend\src\main\java\com\animalfarm\dto\TransferRequestCreate.java
 C:\Users\BenOA\CodexWorkDir\Testproject\animalfarm\backend\src\main\java\com\animalfarm\dto\TransferRequestSummary.java

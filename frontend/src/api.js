@@ -127,6 +127,14 @@ export const api = {
   approveTransferRequest: (id) => request(`/transfer-requests/${id}/approve`, { method: "POST" }),
   rejectTransferRequest: (id) => request(`/transfer-requests/${id}/reject`, { method: "POST" }),
   getOwner: (ownerId) => request(`/owners/${ownerId}`),
+  searchOwners: ({ ownerId, firstName }) => {
+    const params = new URLSearchParams();
+    if (ownerId) params.set("ownerId", ownerId);
+    if (firstName) params.set("firstName", firstName);
+    const q = params.toString();
+    return request(`/owners/search${q ? `?${q}` : ""}`);
+  },
+  updateOwner: (ownerId, payload) => request(`/owners/${ownerId}`, { method: "PUT", body: JSON.stringify(payload) }),
   downloadReport: async (type, value) => {
     let path = `/reports/owner/${value}`;
     if (type === "ownerVsAnimal") path = `/reports/owner-vs-animal?ownerId=${value}`;

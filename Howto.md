@@ -93,6 +93,17 @@ Steps:
 2. Click the relevant report button.
 3. A PDF file downloads automatically.
 
+### 4.7 Search Owners And Edit Owner Record
+1. In **Search Owners**, search using:
+- Owner ID, or
+- Owner first name
+2. Click **Search**.
+3. In search results, click **Edit** for the desired owner.
+4. Update owner details and click **Save Owner**.
+
+Note:
+- Username is displayed as read-only and cannot be changed.
+
 ## 5. Owner User Guide
 
 Owners only manage their own data and animals.

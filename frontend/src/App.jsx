@@ -70,6 +70,9 @@ function AdminPage({ session, onLogout }) {
   const [ownerForm, setOwnerForm] = useState(initialOwner);
   const [animalForm, setAnimalForm] = useState(initialAnimal);
   const [transferForm, setTransferForm] = useState({ toOwnerId: "", animalIds: "" });
+  const [ownerSearch, setOwnerSearch] = useState({ ownerId: "", firstName: "" });
+  const [ownerResults, setOwnerResults] = useState([]);
+  const [editingOwner, setEditingOwner] = useState(null);
   const [reportForm, setReportForm] = useState({ ownerId: "", parentId: "" });
   const [animals, setAnimals] = useState([]);
   const [transferRequests, setTransferRequests] = useState([]);
@@ -122,6 +125,58 @@ function AdminPage({ session, onLogout }) {
       setTransferForm({ toOwnerId: "", animalIds: "" });
       await refresh();
       setMessage("Transfer completed.");
+    } catch (err) {
+      setMessage(err.message);
+    }
+  }
+
+  async function onSearchOwners(e) {
+    e.preventDefault();
+    try {
+      const results = await api.searchOwners({
+        ownerId: ownerSearch.ownerId.trim(),
+        firstName: ownerSearch.firstName.trim()
+      });
+      setOwnerResults(results);
+      if (results.length === 0) {
+        setMessage("No owners found.");
+      } else {
+        setMessage(`Found ${results.length} owner(s).`);
+      }
+    } catch (err) {
+      setMessage(err.message);
+    }
+  }
+
+  function startEditOwner(owner) {
+    setEditingOwner({
+      id: owner.id,
+      username: owner.username,
+      firstName: owner.firstName,
+      lastName: owner.lastName,
+      email: owner.email,
+      phoneNumber: owner.phoneNumber,
+      address: owner.address
+    });
+  }
+
+  async function onSaveOwner(e) {
+    e.preventDefault();
+    if (!editingOwner) return;
+    try {
+      await api.updateOwner(editingOwner.id, {
+        firstName: editingOwner.firstName,
+        lastName: editingOwner.lastName,
+        email: editingOwner.email,
+        phoneNumber: editingOwner.phoneNumber,
+        address: editingOwner.address
+      });
+      const results = await api.searchOwners({
+        ownerId: ownerSearch.ownerId.trim(),
+        firstName: ownerSearch.firstName.trim()
+      });
+      setOwnerResults(results);
+      setMessage("Owner updated successfully.");
     } catch (err) {
       setMessage(err.message);
     }
@@ -194,6 +249,21 @@ function AdminPage({ session, onLogout }) {
           <input placeholder="Parent Animal DB ID" value={reportForm.parentId} onChange={(e) => setReportForm({ ...reportForm, parentId: e.target.value })} />
           <button type="button" onClick={() => onReport("parentVsAnimal", reportForm.parentId, `parent-vs-animal-${reportForm.parentId}.pdf`)}>Parent vs Animal</button>
         </div>
+
+        <form className="card" onSubmit={onSearchOwners}>
+          <h2>Search Owners</h2>
+          <input
+            placeholder="Owner ID"
+            value={ownerSearch.ownerId}
+            onChange={(e) => setOwnerSearch({ ...ownerSearch, ownerId: e.target.value })}
+          />
+          <input
+            placeholder="First name"
+            value={ownerSearch.firstName}
+            onChange={(e) => setOwnerSearch({ ...ownerSearch, firstName: e.target.value })}
+          />
+          <button type="submit">Search</button>
+        </form>
       </section>
 
       <section className="card full">
@@ -212,6 +282,43 @@ function AdminPage({ session, onLogout }) {
           </tbody>
         </table>
       </section>
+
+      <section className="card full">
+        <h2>Owner Search Results</h2>
+        <table>
+          <thead>
+            <tr><th>ID</th><th>Username</th><th>Name</th><th>Email</th><th>Phone</th><th>Action</th></tr>
+          </thead>
+          <tbody>
+            {ownerResults.map((o) => (
+              <tr key={o.id}>
+                <td>{o.id}</td>
+                <td>{o.username}</td>
+                <td>{o.firstName} {o.lastName}</td>
+                <td>{o.email}</td>
+                <td>{o.phoneNumber}</td>
+                <td><button onClick={() => startEditOwner(o)}>Edit</button></td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </section>
+
+      {editingOwner && (
+        <section className="card full">
+          <h2>Edit Owner</h2>
+          <form className="grid" onSubmit={onSaveOwner}>
+            <input value={editingOwner.id} readOnly />
+            <input value={editingOwner.username} readOnly />
+            <input value={editingOwner.firstName} onChange={(e) => setEditingOwner({ ...editingOwner, firstName: e.target.value })} required />
+            <input value={editingOwner.lastName} onChange={(e) => setEditingOwner({ ...editingOwner, lastName: e.target.value })} required />
+            <input type="email" value={editingOwner.email} onChange={(e) => setEditingOwner({ ...editingOwner, email: e.target.value })} required />
+            <input value={editingOwner.phoneNumber} onChange={(e) => setEditingOwner({ ...editingOwner, phoneNumber: e.target.value })} required />
+            <input value={editingOwner.address} onChange={(e) => setEditingOwner({ ...editingOwner, address: e.target.value })} required />
+            <button type="submit">Save Owner</button>
+          </form>
+        </section>
+      )}
 
       <section className="card full">
         <h2>Transfer Requests</h2>

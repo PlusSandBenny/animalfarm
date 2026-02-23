@@ -185,6 +185,9 @@ Services in compose:
 - `POST /api/auth/refresh`
 - `POST /api/auth/logout`
 - `POST /api/owners`
+- `GET /api/owners/search?ownerId=...`
+- `GET /api/owners/search?firstName=...`
+- `PUT /api/owners/{ownerId}`
 - `POST /api/animals`
 - `GET /api/animals`
 - `POST /api/animals/transfer`

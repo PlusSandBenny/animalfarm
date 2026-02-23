@@ -1,6 +1,8 @@
 package com.animalfarm.service;
 
 import com.animalfarm.dto.OwnerRequest;
+import com.animalfarm.dto.OwnerSummary;
+import com.animalfarm.dto.OwnerUpdateRequest;
 import com.animalfarm.exception.ApiException;
 import com.animalfarm.model.ActorRole;
 import com.animalfarm.model.AppUser;
@@ -59,5 +61,38 @@ public class OwnerService {
 
     public List<Owner> listOwners() {
         return ownerRepository.findAll();
+    }
+
+    public List<OwnerSummary> searchOwners(Long ownerId, String firstName, ActorRole role) {
+        RoleValidator.requireAdmin(role);
+        if (ownerId != null) {
+            return List.of(toSummary(getOwner(ownerId)));
+        }
+        if (firstName != null && !firstName.isBlank()) {
+            return ownerRepository.findByFirstNameContainingIgnoreCase(firstName.trim())
+                    .stream()
+                    .map(this::toSummary)
+                    .toList();
+        }
+        return ownerRepository.findAll().stream().map(this::toSummary).toList();
+    }
+
+    @Transactional
+    public OwnerSummary updateOwner(Long ownerId, OwnerUpdateRequest request, ActorRole role) {
+        RoleValidator.requireAdmin(role);
+        Owner owner = getOwner(ownerId);
+        owner.setFirstName(request.firstName());
+        owner.setLastName(request.lastName());
+        owner.setEmail(request.email());
+        owner.setPhoneNumber(request.phoneNumber());
+        owner.setAddress(request.address());
+        return toSummary(owner);
+    }
+
+    private OwnerSummary toSummary(Owner owner) {
+        String username = appUserRepository.findByOwnerId(owner.getId())
+                .map(AppUser::getUsername)
+                .orElse("N/A");
+        return OwnerSummary.of(owner, username);
     }
 }
