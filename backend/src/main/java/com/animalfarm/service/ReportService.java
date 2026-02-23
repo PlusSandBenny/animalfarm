@@ -6,6 +6,9 @@ import com.animalfarm.model.Owner;
 import com.lowagie.text.Document;
 import com.lowagie.text.DocumentException;
 import com.lowagie.text.Paragraph;
+import com.lowagie.text.Phrase;
+import com.lowagie.text.pdf.PdfPCell;
+import com.lowagie.text.pdf.PdfPTable;
 import com.lowagie.text.pdf.PdfWriter;
 import java.io.ByteArrayOutputStream;
 import java.util.List;
@@ -81,9 +84,15 @@ public class ReportService {
             PdfWriter.getInstance(document, out);
             document.open();
             document.add(new Paragraph("Owner Animal Type Counts Report"));
-            document.add(new Paragraph("Format: owner_id, firstname, Cattle, Goats, Rams, Pigs"));
             document.add(new Paragraph(" "));
-            document.add(new Paragraph("owner_id, firstname, Cattle, Goats, Rams, Pigs"));
+            PdfPTable table = new PdfPTable(6);
+            table.setWidthPercentage(100f);
+            table.addCell(headerCell("owner_id"));
+            table.addCell(headerCell("firstname"));
+            table.addCell(headerCell("Cattle"));
+            table.addCell(headerCell("Goats"));
+            table.addCell(headerCell("Rams"));
+            table.addCell(headerCell("Pigs"));
 
             for (Owner owner : owners) {
                 List<AnimalSummary> animals = animalService.getByOwner(owner.getId());
@@ -93,18 +102,30 @@ public class ReportService {
                 long goats = counts.getOrDefault(AnimalType.GOAT, 0L);
                 long rams = counts.getOrDefault(AnimalType.RAM, 0L);
                 long pigs = counts.getOrDefault(AnimalType.PIG, 0L);
-                document.add(new Paragraph(
-                        owner.getId() + ", " + owner.getFirstName() + ", " + cattle + ", " + goats + ", " + rams + ", " + pigs
-                ));
+                table.addCell(String.valueOf(owner.getId()));
+                table.addCell(owner.getFirstName());
+                table.addCell(String.valueOf(cattle));
+                table.addCell(String.valueOf(goats));
+                table.addCell(String.valueOf(rams));
+                table.addCell(String.valueOf(pigs));
             }
             if (owners.isEmpty()) {
-                document.add(new Paragraph("No owners found."));
+                PdfPCell noData = new PdfPCell(new Phrase("No owners found."));
+                noData.setColspan(6);
+                table.addCell(noData);
             }
+            document.add(table);
             document.close();
             return out.toByteArray();
         } catch (DocumentException | java.io.IOException e) {
             throw new RuntimeException("Failed to generate owner animal type counts PDF", e);
         }
+    }
+
+    private PdfPCell headerCell(String value) {
+        PdfPCell cell = new PdfPCell(new Phrase(value));
+        cell.setPadding(6f);
+        return cell;
     }
 
     private byte[] buildPdf(String title, String subtitle, List<AnimalSummary> animals) {
