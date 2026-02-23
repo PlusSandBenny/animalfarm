@@ -46,6 +46,7 @@ async function doFetch(path, options = {}) {
     ...options,
     headers: authHeaders(headers)
   });
+  return res;
 }
 
 async function ensureRefreshed() {
