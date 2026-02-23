@@ -71,6 +71,54 @@ npm run dev
 - Frontend: `http://localhost:5173`
 - Backend API: `http://localhost:8080/api`
 
+### Option 3: Run with Vagrant (auto-config + auto-deploy)
+
+Prerequisites:
+- VirtualBox
+- Vagrant
+
+From the project root:
+
+```bash
+vagrant up
+```
+
+What happens automatically:
+- Ubuntu VM is created
+- Docker and Docker Compose are installed in the VM
+- Application is cloned from `https://github.com/PlusSandBenny/animalfarm.git` into `/opt/animalfarm`
+- Branch defaults to `dev` (configurable with `APP_BRANCH`)
+- `docker compose up -d --build` is executed from the cloned repo
+
+Access from host machine:
+- Frontend: `http://localhost:5173`
+- Backend API: `http://localhost:8080/api`
+- MySQL: `localhost:3307`
+
+Useful commands:
+
+```bash
+vagrant ssh
+vagrant halt
+vagrant reload --provision
+vagrant destroy -f
+```
+
+Use a different branch when needed:
+
+PowerShell:
+
+```powershell
+$env:APP_BRANCH="main"
+vagrant reload --provision
+```
+
+Bash:
+
+```bash
+APP_BRANCH=main vagrant reload --provision
+```
+
 ## Backend Setup
 
 1. Create MySQL user/database (or use defaults in `backend/src/main/resources/application.yml`).
