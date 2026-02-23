@@ -13,3 +13,11 @@ spring:
       hibernate:
         format_sql: true
     show-sql: true
+
+app:
+  auth:
+    jwt-secret: ${APP_AUTH_JWT_SECRET:change-this-secret-key-change-this-secret-key}
+    access-token-minutes: ${APP_AUTH_ACCESS_TOKEN_MINUTES:15}
+    refresh-token-days: ${APP_AUTH_REFRESH_TOKEN_DAYS:7}
+    admin-username: ${APP_AUTH_ADMIN_USERNAME:admin}
+    admin-password: ${APP_AUTH_ADMIN_PASSWORD:admin123}

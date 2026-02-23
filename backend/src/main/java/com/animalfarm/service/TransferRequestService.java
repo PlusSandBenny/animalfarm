@@ -1,5 +1,6 @@
 package com.animalfarm.service;
 
+import com.animalfarm.auth.AuthSession;
 import com.animalfarm.dto.TransferAnimalsRequest;
 import com.animalfarm.dto.TransferRequestCreate;
 import com.animalfarm.dto.TransferRequestSummary;
@@ -51,7 +52,8 @@ public class TransferRequestService {
     }
 
     @Transactional
-    public void approve(Long requestId, ActorRole role) {
+    public void approve(Long requestId, AuthSession actor) {
+        ActorRole role = actor.role();
         RoleValidator.requireAdmin(role);
 
         TransferRequest tr = transferRequestRepository.findById(requestId)
@@ -63,12 +65,13 @@ public class TransferRequestService {
         animalService.transferAnimals(new TransferAnimalsRequest(
                 tr.getToOwner().getId(),
                 tr.getAnimalIds()
-        ), ActorRole.ADMIN, null);
+        ), actor);
         tr.setStatus(TransferStatus.APPROVED);
     }
 
     @Transactional
-    public void reject(Long requestId, ActorRole role) {
+    public void reject(Long requestId, AuthSession actor) {
+        ActorRole role = actor.role();
         RoleValidator.requireAdmin(role);
 
         TransferRequest tr = transferRequestRepository.findById(requestId)

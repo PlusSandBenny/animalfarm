@@ -39,12 +39,12 @@ public class TransferRequestController {
     @PostMapping("/{requestId}/approve")
     public void approve(@PathVariable Long requestId, HttpServletRequest httpRequest) {
         AuthSession session = AuthContext.require(httpRequest);
-        transferRequestService.approve(requestId, session.role());
+        transferRequestService.approve(requestId, session);
     }
 
     @PostMapping("/{requestId}/reject")
     public void reject(@PathVariable Long requestId, HttpServletRequest httpRequest) {
         AuthSession session = AuthContext.require(httpRequest);
-        transferRequestService.reject(requestId, session.role());
+        transferRequestService.reject(requestId, session);
     }
 }

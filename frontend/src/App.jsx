@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useState } from "react";
 import { api, authApi } from "./api";
 
-const initialOwner = { firstName: "", lastName: "", email: "", phoneNumber: "", address: "" };
+const initialOwner = { firstName: "", lastName: "", email: "", phoneNumber: "", address: "", username: "", password: "" };
 const initialAnimal = {
   animalId: "",
   color: "",
@@ -32,7 +32,7 @@ function LoginPage({ onLogin }) {
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
 
-  const demoUsers = "admin/admin123, owner1/owner123, owner2/owner123";
+  const demoUsers = "Default admin (from backend env): admin / admin123";
 
   async function submit(e) {
     e.preventDefault();
@@ -155,6 +155,8 @@ function AdminPage({ session, onLogout }) {
           <input placeholder="Email" type="email" value={ownerForm.email} onChange={(e) => setOwnerForm({ ...ownerForm, email: e.target.value })} required />
           <input placeholder="Phone" value={ownerForm.phoneNumber} onChange={(e) => setOwnerForm({ ...ownerForm, phoneNumber: e.target.value })} required />
           <input placeholder="Address" value={ownerForm.address} onChange={(e) => setOwnerForm({ ...ownerForm, address: e.target.value })} required />
+          <input placeholder="Username" value={ownerForm.username} onChange={(e) => setOwnerForm({ ...ownerForm, username: e.target.value })} required />
+          <input placeholder="Temporary password" type="password" value={ownerForm.password} onChange={(e) => setOwnerForm({ ...ownerForm, password: e.target.value })} required />
           <button type="submit">Create Owner</button>
         </form>
 

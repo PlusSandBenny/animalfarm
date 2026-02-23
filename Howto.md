@@ -25,10 +25,11 @@ Open the frontend in your browser:
 
 You must log in first.
 
-Demo accounts:
-- `admin / admin123`
-- `owner1 / owner123` (mapped owner id: `1`)
-- `owner2 / owner123` (mapped owner id: `2`)
+Default admin account (configurable via backend env):
+- Username: `admin`
+- Password: `admin123`
+
+Owner accounts are created by admin during owner registration.
 
 After login, the system opens the correct dashboard based on role.
 
@@ -44,7 +45,13 @@ Admin users can access all core management features.
 - Email
 - Phone
 - Address
+- Username
+- Temporary password
 3. Click **Create Owner**.
+
+Result:
+- Owner profile is created.
+- Owner login account is created with hashed password.
 
 ### 4.2 Register Animal
 1. In **Register Animal** form, provide:
@@ -154,6 +161,7 @@ Use **Logout** button in the top right of the dashboard.
 
 The frontend uses token-based authentication:
 - Login endpoint: `POST /api/auth/login`
+- Refresh endpoint: `POST /api/auth/refresh`
 - Protected endpoints require `Authorization: Bearer <token>`
 
 ## 10. Recommended Next Improvements

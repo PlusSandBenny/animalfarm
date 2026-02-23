@@ -2,5 +2,5 @@ package com.animalfarm.auth;
 
 import com.animalfarm.model.ActorRole;
 
-public record AuthSession(String username, ActorRole role, Long ownerId) {
+public record AuthSession(Long userId, String username, ActorRole role, Long ownerId) {
 }

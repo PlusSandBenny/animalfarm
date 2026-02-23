@@ -1,20 +1,42 @@
 const BASE_URL = (import.meta.env.VITE_API_BASE_URL || "/api").replace(/\/$/, "");
-const TOKEN_KEY = "animalfarm_token";
+const ACCESS_TOKEN_KEY = "animalfarm_access_token";
+const REFRESH_TOKEN_KEY = "animalfarm_refresh_token";
 const USER_KEY = "animalfarm_user";
+let refreshInFlight = null;
 
-function getToken() {
-  return localStorage.getItem(TOKEN_KEY) || "";
+function getAccessToken() {
+  return localStorage.getItem(ACCESS_TOKEN_KEY) || "";
+}
+
+function getRefreshToken() {
+  return localStorage.getItem(REFRESH_TOKEN_KEY) || "";
+}
+
+function setSession(data) {
+  localStorage.setItem(ACCESS_TOKEN_KEY, data.accessToken);
+  localStorage.setItem(REFRESH_TOKEN_KEY, data.refreshToken);
+  localStorage.setItem(USER_KEY, JSON.stringify({
+    username: data.username,
+    role: data.role,
+    ownerId: data.ownerId
+  }));
+}
+
+function clearSession() {
+  localStorage.removeItem(ACCESS_TOKEN_KEY);
+  localStorage.removeItem(REFRESH_TOKEN_KEY);
+  localStorage.removeItem(USER_KEY);
 }
 
 function authHeaders(extra = {}) {
-  const token = getToken();
+  const token = getAccessToken();
   return {
     ...(token ? { Authorization: `Bearer ${token}` } : {}),
     ...extra
   };
 }
 
-async function request(path, options = {}) {
+async function doFetch(path, options = {}) {
   const headers = { ...(options.headers || {}) };
   const body = options.body;
   if (!(body instanceof FormData) && !headers["Content-Type"]) {
@@ -24,6 +46,40 @@ async function request(path, options = {}) {
     ...options,
     headers: authHeaders(headers)
   });
+}
+
+async function ensureRefreshed() {
+  if (refreshInFlight) {
+    return refreshInFlight;
+  }
+  const refreshToken = getRefreshToken();
+  if (!refreshToken) {
+    throw new Error("Session expired. Please login again.");
+  }
+  refreshInFlight = fetch(`${BASE_URL}/auth/refresh`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ refreshToken })
+  }).then(async (res) => {
+    if (!res.ok) {
+      clearSession();
+      throw new Error("Session expired. Please login again.");
+    }
+    const data = await res.json();
+    setSession(data);
+    return data;
+  }).finally(() => {
+    refreshInFlight = null;
+  });
+  return refreshInFlight;
+}
+
+async function request(path, options = {}) {
+  let res = await doFetch(path, options);
+  if (res.status === 401 && !path.startsWith("/auth/")) {
+    await ensureRefreshed();
+    res = await doFetch(path, options);
+  }
   if (!res.ok) {
     const text = await res.text();
     throw new Error(text || `Request failed: ${res.status}`);
@@ -39,16 +95,18 @@ export const authApi = {
       method: "POST",
       body: JSON.stringify({ username, password })
     });
-    localStorage.setItem(TOKEN_KEY, data.token);
-    localStorage.setItem(USER_KEY, JSON.stringify(data));
+    setSession(data);
     return data;
   },
   async logout() {
+    const refreshToken = getRefreshToken();
     try {
-      await request("/auth/logout", { method: "POST" });
+      await request("/auth/logout", {
+        method: "POST",
+        body: JSON.stringify({ refreshToken })
+      });
     } finally {
-      localStorage.removeItem(TOKEN_KEY);
-      localStorage.removeItem(USER_KEY);
+      clearSession();
     }
   },
   currentUser() {

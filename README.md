@@ -77,10 +77,13 @@ The app now has a login page and role-based dashboards:
 - `ADMIN` dashboard: owner registration, animal registration, all transfers, market sales, transfer approvals/rejections, admin reports.
 - `OWNER` dashboard: own animals, own transfers, create admin transfer request, owner report.
 
-Demo users:
-- `admin / admin123`
-- `owner1 / owner123` (mapped to owner id `1`)
-- `owner2 / owner123` (mapped to owner id `2`)
+Authentication model:
+- Users are stored in MySQL (`app_users`) with hashed passwords (BCrypt).
+- Access uses JWT access token + refresh token.
+- Admin is bootstrapped from config:
+  - username: `${APP_AUTH_ADMIN_USERNAME:admin}`
+  - password: `${APP_AUTH_ADMIN_PASSWORD:admin123}`
+- Admin creates owner profile and owner login credentials together.
 
 ### Option 3: Run with Vagrant (auto-config + auto-deploy)
 
@@ -177,7 +180,11 @@ Services in compose:
 
 ## Main Endpoints
 
-- `POST /api/owners` (header `X-Actor-Role: ADMIN`)
+- `POST /api/owners`
+- `POST /api/auth/login`
+- `POST /api/auth/refresh`
+- `POST /api/auth/logout`
+- `POST /api/owners`
 - `POST /api/animals`
 - `GET /api/animals`
 - `POST /api/animals/transfer`
@@ -192,5 +199,5 @@ Services in compose:
 
 ## Notes
 
-- This version uses request roles (`OWNER` / `ADMIN`) for authorization decisions.
-- For production, add real authentication and authorization (JWT/session, users, password policy, audit logs).
+- This version enforces role-based access from authenticated JWT claims (`OWNER` / `ADMIN`).
+- Transfer and sell operations are written to `audit_logs`.

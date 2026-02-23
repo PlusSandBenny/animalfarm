@@ -7,6 +7,7 @@ import static org.mockito.Mockito.when;
 import com.animalfarm.dto.AnimalRequest;
 import com.animalfarm.dto.TransferAnimalsRequest;
 import com.animalfarm.exception.ApiException;
+import com.animalfarm.auth.AuthSession;
 import com.animalfarm.model.ActorRole;
 import com.animalfarm.model.Animal;
 import com.animalfarm.model.AnimalType;
@@ -32,11 +33,14 @@ class AnimalServiceTest {
     @Mock
     private OwnerRepository ownerRepository;
 
+    @Mock
+    private AuditLogService auditLogService;
+
     private AnimalService animalService;
 
     @BeforeEach
     void setUp() {
-        animalService = new AnimalService(animalRepository, ownerRepository);
+        animalService = new AnimalService(animalRepository, ownerRepository, auditLogService);
     }
 
     @Test
@@ -68,7 +72,7 @@ class AnimalServiceTest {
         var result = animalService.transferAnimals(new TransferAnimalsRequest(
                 2L,
                 List.of(10L)
-        ), ActorRole.OWNER, 1L);
+        ), new AuthSession(1L, "owner1", ActorRole.OWNER, 1L));
 
         assertEquals(1, result.size());
         assertEquals(2L, animal.getOwner().getId());
@@ -87,14 +91,15 @@ class AnimalServiceTest {
         ApiException ex = assertThrows(ApiException.class, () -> animalService.transferAnimals(new TransferAnimalsRequest(
                 2L,
                 List.of(11L)
-        ), ActorRole.OWNER, 99L));
+        ), new AuthSession(2L, "owner2", ActorRole.OWNER, 99L)));
 
         assertEquals("Transfer denied. You are not owner of animal id A-011", ex.getMessage());
     }
 
     @Test
     void sellAnimal_requiresAdminRole() {
-        ApiException ex = assertThrows(ApiException.class, () -> animalService.sellAnimalToMarket(12L, ActorRole.OWNER));
+        ApiException ex = assertThrows(ApiException.class, () ->
+                animalService.sellAnimalToMarket(12L, new AuthSession(1L, "owner1", ActorRole.OWNER, 1L)));
         assertEquals("This action requires ADMIN role.", ex.getMessage());
     }
 

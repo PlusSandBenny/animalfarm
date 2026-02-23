@@ -1,5 +1,6 @@
 package com.animalfarm.service;
 
+import com.animalfarm.auth.AuthSession;
 import com.animalfarm.dto.AnimalRequest;
 import com.animalfarm.dto.AnimalSummary;
 import com.animalfarm.dto.TransferAnimalsRequest;
@@ -18,10 +19,16 @@ import org.springframework.transaction.annotation.Transactional;
 public class AnimalService {
     private final AnimalRepository animalRepository;
     private final OwnerRepository ownerRepository;
+    private final AuditLogService auditLogService;
 
-    public AnimalService(AnimalRepository animalRepository, OwnerRepository ownerRepository) {
+    public AnimalService(
+            AnimalRepository animalRepository,
+            OwnerRepository ownerRepository,
+            AuditLogService auditLogService
+    ) {
         this.animalRepository = animalRepository;
         this.ownerRepository = ownerRepository;
+        this.auditLogService = auditLogService;
     }
 
     public AnimalSummary registerAnimal(AnimalRequest request, ActorRole role) {
@@ -57,7 +64,9 @@ public class AnimalService {
     }
 
     @Transactional
-    public List<AnimalSummary> transferAnimals(TransferAnimalsRequest request, ActorRole role, Long actorOwnerId) {
+    public List<AnimalSummary> transferAnimals(TransferAnimalsRequest request, AuthSession actor) {
+        ActorRole role = actor.role();
+        Long actorOwnerId = actor.ownerId();
         Owner toOwner = ownerRepository.findById(request.toOwnerId())
                 .orElseThrow(() -> new ApiException("Destination owner not found: " + request.toOwnerId()));
 
@@ -76,16 +85,21 @@ public class AnimalService {
             animal.setOwner(toOwner);
             transferred.add(AnimalSummary.from(animal));
         }
+        auditLogService.log(actor, "TRANSFER_ANIMALS",
+                "Transferred animals " + request.animalIds() + " to owner " + request.toOwnerId());
         return transferred;
     }
 
     @Transactional
-    public AnimalSummary sellAnimalToMarket(Long animalId, ActorRole role) {
+    public AnimalSummary sellAnimalToMarket(Long animalId, AuthSession actor) {
+        ActorRole role = actor.role();
         RoleValidator.requireAdmin(role);
 
         Animal animal = animalRepository.findById(animalId)
                 .orElseThrow(() -> new ApiException("Animal not found: " + animalId));
         animal.setSold(true);
+        auditLogService.log(actor, "SELL_ANIMAL",
+                "Sold animal " + animal.getAnimalId() + " (dbId " + animal.getId() + ") to market");
         return AnimalSummary.from(animal);
     }
 }

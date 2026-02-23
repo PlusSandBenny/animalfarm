@@ -8,6 +8,7 @@ import static org.mockito.Mockito.when;
 
 import com.animalfarm.dto.TransferRequestCreate;
 import com.animalfarm.exception.ApiException;
+import com.animalfarm.auth.AuthSession;
 import com.animalfarm.model.ActorRole;
 import com.animalfarm.model.Owner;
 import com.animalfarm.model.TransferRequest;
@@ -69,16 +70,16 @@ class TransferRequestServiceTest {
 
         when(transferRequestRepository.findById(5L)).thenReturn(Optional.of(request));
 
-        transferRequestService.approve(5L, ActorRole.ADMIN);
+        transferRequestService.approve(5L, new AuthSession(1L, "admin", ActorRole.ADMIN, null));
 
-        verify(animalService).transferAnimals(any(), any(), any());
+        verify(animalService).transferAnimals(any(), any());
         assertEquals(TransferStatus.APPROVED, request.getStatus());
     }
 
     @Test
     void reject_requiresAdminRole() {
         ApiException ex = assertThrows(ApiException.class, () ->
-                transferRequestService.reject(3L, ActorRole.OWNER));
+                transferRequestService.reject(3L, new AuthSession(2L, "owner", ActorRole.OWNER, 1L)));
 
         assertEquals("This action requires ADMIN role.", ex.getMessage());
     }

@@ -44,12 +44,12 @@ public class AnimalController {
     @PostMapping("/transfer")
     public List<AnimalSummary> transfer(@Valid @RequestBody TransferAnimalsRequest request, HttpServletRequest httpRequest) {
         AuthSession session = AuthContext.require(httpRequest);
-        return animalService.transferAnimals(request, session.role(), session.ownerId());
+        return animalService.transferAnimals(request, session);
     }
 
     @PostMapping("/{animalId}/sell")
     public AnimalSummary sell(@PathVariable Long animalId, HttpServletRequest httpRequest) {
         AuthSession session = AuthContext.require(httpRequest);
-        return animalService.sellAnimalToMarket(animalId, session.role());
+        return animalService.sellAnimalToMarket(animalId, session);
     }
 }
