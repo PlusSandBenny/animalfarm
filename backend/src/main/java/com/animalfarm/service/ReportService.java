@@ -1,6 +1,7 @@
 package com.animalfarm.service;
 
 import com.animalfarm.dto.AnimalSummary;
+import com.animalfarm.model.AnimalType;
 import com.animalfarm.model.Owner;
 import com.lowagie.text.Document;
 import com.lowagie.text.DocumentException;
@@ -8,6 +9,8 @@ import com.lowagie.text.Paragraph;
 import com.lowagie.text.pdf.PdfWriter;
 import java.io.ByteArrayOutputStream;
 import java.util.List;
+import java.util.Map;
+import java.util.stream.Collectors;
 import org.springframework.stereotype.Service;
 
 @Service
@@ -68,6 +71,39 @@ public class ReportService {
             return out.toByteArray();
         } catch (DocumentException | java.io.IOException e) {
             throw new RuntimeException("Failed to generate owners list PDF", e);
+        }
+    }
+
+    public byte[] ownerAnimalTypeCountsPdf() {
+        var owners = ownerService.listOwners();
+        try (ByteArrayOutputStream out = new ByteArrayOutputStream()) {
+            Document document = new Document();
+            PdfWriter.getInstance(document, out);
+            document.open();
+            document.add(new Paragraph("Owner Animal Type Counts Report"));
+            document.add(new Paragraph("Format: owner_id, firstname, Cattle, Goats, Rams, Pigs"));
+            document.add(new Paragraph(" "));
+            document.add(new Paragraph("owner_id, firstname, Cattle, Goats, Rams, Pigs"));
+
+            for (Owner owner : owners) {
+                List<AnimalSummary> animals = animalService.getByOwner(owner.getId());
+                Map<AnimalType, Long> counts = animals.stream()
+                        .collect(Collectors.groupingBy(AnimalSummary::type, Collectors.counting()));
+                long cattle = counts.getOrDefault(AnimalType.CATTLE, 0L);
+                long goats = counts.getOrDefault(AnimalType.GOAT, 0L);
+                long rams = counts.getOrDefault(AnimalType.RAM, 0L);
+                long pigs = counts.getOrDefault(AnimalType.PIG, 0L);
+                document.add(new Paragraph(
+                        owner.getId() + ", " + owner.getFirstName() + ", " + cattle + ", " + goats + ", " + rams + ", " + pigs
+                ));
+            }
+            if (owners.isEmpty()) {
+                document.add(new Paragraph("No owners found."));
+            }
+            document.close();
+            return out.toByteArray();
+        } catch (DocumentException | java.io.IOException e) {
+            throw new RuntimeException("Failed to generate owner animal type counts PDF", e);
         }
     }
 

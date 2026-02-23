@@ -295,6 +295,7 @@ function AdminPage({ session, onLogout }) {
         <div className="card">
           <h2>Admin Reports</h2>
           <button type="button" onClick={() => onReport("ownersList", "", "owners-list.pdf")}>Owners List</button>
+          <button type="button" onClick={() => onReport("ownersAnimalTypeCounts", "", "owners-animal-type-counts.pdf")}>Owners Animal Counts</button>
           <input placeholder="Owner ID" value={reportForm.ownerId} onChange={(e) => setReportForm({ ...reportForm, ownerId: e.target.value })} />
           <button type="button" onClick={() => onReport("ownerVsAnimal", reportForm.ownerId, `owner-vs-animal-${reportForm.ownerId}.pdf`)}>Owner vs Animal</button>
           <button type="button" onClick={() => onReport("owner", reportForm.ownerId, `owner-animal-${reportForm.ownerId}.pdf`)}>Owner Animal</button>
