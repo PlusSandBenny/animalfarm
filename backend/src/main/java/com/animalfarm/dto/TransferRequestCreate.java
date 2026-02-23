@@ -9,7 +9,6 @@ public record TransferRequestCreate(
         @NotNull Long fromOwnerId,
         @NotNull Long toOwnerId,
         @NotEmpty List<Long> animalIds,
-        @NotBlank String ownerEmailMessage,
-        @NotNull String actorRole
+        @NotBlank String ownerEmailMessage
 ) {
 }

@@ -6,8 +6,6 @@ import java.util.List;
 
 public record TransferAnimalsRequest(
         @NotNull Long toOwnerId,
-        @NotEmpty List<Long> animalIds,
-        @NotNull Long actorOwnerId,
-        @NotNull String actorRole
+        @NotEmpty List<Long> animalIds
 ) {
 }

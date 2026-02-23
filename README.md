@@ -71,6 +71,17 @@ npm run dev
 - Frontend: `http://localhost:5173`
 - Backend API: `http://localhost:8080/api`
 
+## Authentication And Roles
+
+The app now has a login page and role-based dashboards:
+- `ADMIN` dashboard: owner registration, animal registration, all transfers, market sales, transfer approvals/rejections, admin reports.
+- `OWNER` dashboard: own animals, own transfers, create admin transfer request, owner report.
+
+Demo users:
+- `admin / admin123`
+- `owner1 / owner123` (mapped to owner id `1`)
+- `owner2 / owner123` (mapped to owner id `2`)
+
 ### Option 3: Run with Vagrant (auto-config + auto-deploy)
 
 Prerequisites:

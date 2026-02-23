@@ -24,6 +24,10 @@ body {
   padding: 1rem;
 }
 
+.narrow {
+  max-width: 520px;
+}
+
 .hero {
   padding: 1.2rem;
   border: 2px solid var(--line);
@@ -48,6 +52,18 @@ body {
   background: #eff9f0;
 }
 
+.error {
+  border-left-color: #a4161a;
+  background: #fdecec;
+}
+
+.topbar {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 1rem;
+}
+
 .grid {
   display: grid;
   gap: 1rem;
@@ -64,6 +80,10 @@ body {
   flex-direction: column;
   gap: 0.5rem;
   animation: rise 550ms ease-out;
+}
+
+.login {
+  margin-top: 1rem;
 }
 
 .full {
@@ -120,6 +140,10 @@ th, td {
   text-align: left;
   padding: 0.55rem;
   font-size: 0.9rem;
+}
+
+small {
+  color: #5c5142;
 }
 
 .report-row {

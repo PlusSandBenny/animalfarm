@@ -15,8 +15,7 @@ public class OwnerService {
         this.ownerRepository = ownerRepository;
     }
 
-    public Owner registerOwner(OwnerRequest request, String actorRole) {
-        ActorRole role = RoleValidator.parseRole(actorRole);
+    public Owner registerOwner(OwnerRequest request, ActorRole role) {
         RoleValidator.requireAdmin(role);
 
         Owner owner = new Owner();

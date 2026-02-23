@@ -13,7 +13,6 @@ public record AnimalRequest(
         @NotNull AnimalType type,
         String image,
         Long parentId,
-        @NotNull Long ownerId,
-        @NotNull String actorRole
+        @NotNull Long ownerId
 ) {
 }

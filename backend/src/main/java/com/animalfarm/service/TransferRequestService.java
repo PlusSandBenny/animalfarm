@@ -1,6 +1,5 @@
 package com.animalfarm.service;
 
-import com.animalfarm.dto.AdminActionRequest;
 import com.animalfarm.dto.TransferAnimalsRequest;
 import com.animalfarm.dto.TransferRequestCreate;
 import com.animalfarm.dto.TransferRequestSummary;
@@ -29,10 +28,12 @@ public class TransferRequestService {
         this.animalService = animalService;
     }
 
-    public TransferRequestSummary create(TransferRequestCreate request) {
-        ActorRole role = RoleValidator.parseRole(request.actorRole());
+    public TransferRequestSummary create(TransferRequestCreate request, ActorRole role, Long actorOwnerId) {
         if (role != ActorRole.OWNER && role != ActorRole.ADMIN) {
             throw new ApiException("Only OWNER or ADMIN can create transfer requests.");
+        }
+        if (role == ActorRole.OWNER && (actorOwnerId == null || !actorOwnerId.equals(request.fromOwnerId()))) {
+            throw new ApiException("Owner can only create transfer request for own animals.");
         }
 
         TransferRequest tr = new TransferRequest();
@@ -44,13 +45,13 @@ public class TransferRequestService {
         return TransferRequestSummary.from(transferRequestRepository.save(tr));
     }
 
-    public List<TransferRequestSummary> listAll() {
+    public List<TransferRequestSummary> listAll(ActorRole role) {
+        RoleValidator.requireAdmin(role);
         return transferRequestRepository.findAll().stream().map(TransferRequestSummary::from).toList();
     }
 
     @Transactional
-    public void approve(Long requestId, AdminActionRequest request) {
-        ActorRole role = RoleValidator.parseRole(request.actorRole());
+    public void approve(Long requestId, ActorRole role) {
         RoleValidator.requireAdmin(role);
 
         TransferRequest tr = transferRequestRepository.findById(requestId)
@@ -61,16 +62,13 @@ public class TransferRequestService {
 
         animalService.transferAnimals(new TransferAnimalsRequest(
                 tr.getToOwner().getId(),
-                tr.getAnimalIds(),
-                tr.getFromOwner().getId(),
-                ActorRole.ADMIN.name()
-        ));
+                tr.getAnimalIds()
+        ), ActorRole.ADMIN, null);
         tr.setStatus(TransferStatus.APPROVED);
     }
 
     @Transactional
-    public void reject(Long requestId, AdminActionRequest request) {
-        ActorRole role = RoleValidator.parseRole(request.actorRole());
+    public void reject(Long requestId, ActorRole role) {
         RoleValidator.requireAdmin(role);
 
         TransferRequest tr = transferRequestRepository.findById(requestId)

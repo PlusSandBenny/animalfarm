@@ -24,8 +24,7 @@ public class AnimalService {
         this.ownerRepository = ownerRepository;
     }
 
-    public AnimalSummary registerAnimal(AnimalRequest request) {
-        ActorRole role = RoleValidator.parseRole(request.actorRole());
+    public AnimalSummary registerAnimal(AnimalRequest request, ActorRole role) {
         RoleValidator.requireAdmin(role);
 
         Owner owner = ownerRepository.findById(request.ownerId())
@@ -58,8 +57,7 @@ public class AnimalService {
     }
 
     @Transactional
-    public List<AnimalSummary> transferAnimals(TransferAnimalsRequest request) {
-        ActorRole role = RoleValidator.parseRole(request.actorRole());
+    public List<AnimalSummary> transferAnimals(TransferAnimalsRequest request, ActorRole role, Long actorOwnerId) {
         Owner toOwner = ownerRepository.findById(request.toOwnerId())
                 .orElseThrow(() -> new ApiException("Destination owner not found: " + request.toOwnerId()));
 
@@ -70,7 +68,7 @@ public class AnimalService {
             if (animal.isSold()) {
                 throw new ApiException("Animal already sold to market: " + animal.getAnimalId());
             }
-            boolean isOwner = animal.getOwner().getId().equals(request.actorOwnerId());
+            boolean isOwner = actorOwnerId != null && animal.getOwner().getId().equals(actorOwnerId);
             if (role != ActorRole.ADMIN && !isOwner) {
                 throw new ApiException("Transfer denied. You are not owner of animal id " + animal.getAnimalId());
             }
@@ -82,8 +80,7 @@ public class AnimalService {
     }
 
     @Transactional
-    public AnimalSummary sellAnimalToMarket(Long animalId, String actorRole) {
-        ActorRole role = RoleValidator.parseRole(actorRole);
+    public AnimalSummary sellAnimalToMarket(Long animalId, ActorRole role) {
         RoleValidator.requireAdmin(role);
 
         Animal animal = animalRepository.findById(animalId)

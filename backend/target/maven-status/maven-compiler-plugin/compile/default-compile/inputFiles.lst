@@ -1,4 +1,11 @@
 C:\Users\BenOA\CodexWorkDir\Testproject\animalfarm\backend\src\main\java\com\animalfarm\AnimalFarmApplication.java
+C:\Users\BenOA\CodexWorkDir\Testproject\animalfarm\backend\src\main\java\com\animalfarm\auth\AuthContext.java
+C:\Users\BenOA\CodexWorkDir\Testproject\animalfarm\backend\src\main\java\com\animalfarm\auth\AuthController.java
+C:\Users\BenOA\CodexWorkDir\Testproject\animalfarm\backend\src\main\java\com\animalfarm\auth\AuthInterceptor.java
+C:\Users\BenOA\CodexWorkDir\Testproject\animalfarm\backend\src\main\java\com\animalfarm\auth\AuthSession.java
+C:\Users\BenOA\CodexWorkDir\Testproject\animalfarm\backend\src\main\java\com\animalfarm\auth\LoginRequest.java
+C:\Users\BenOA\CodexWorkDir\Testproject\animalfarm\backend\src\main\java\com\animalfarm\auth\LoginResponse.java
+C:\Users\BenOA\CodexWorkDir\Testproject\animalfarm\backend\src\main\java\com\animalfarm\auth\SessionAuthService.java
 C:\Users\BenOA\CodexWorkDir\Testproject\animalfarm\backend\src\main\java\com\animalfarm\config\WebConfig.java
 C:\Users\BenOA\CodexWorkDir\Testproject\animalfarm\backend\src\main\java\com\animalfarm\controller\AnimalController.java
 C:\Users\BenOA\CodexWorkDir\Testproject\animalfarm\backend\src\main\java\com\animalfarm\controller\OwnerController.java
@@ -13,6 +20,7 @@ C:\Users\BenOA\CodexWorkDir\Testproject\animalfarm\backend\src\main\java\com\ani
 C:\Users\BenOA\CodexWorkDir\Testproject\animalfarm\backend\src\main\java\com\animalfarm\dto\TransferRequestSummary.java
 C:\Users\BenOA\CodexWorkDir\Testproject\animalfarm\backend\src\main\java\com\animalfarm\exception\ApiException.java
 C:\Users\BenOA\CodexWorkDir\Testproject\animalfarm\backend\src\main\java\com\animalfarm\exception\GlobalExceptionHandler.java
+C:\Users\BenOA\CodexWorkDir\Testproject\animalfarm\backend\src\main\java\com\animalfarm\exception\UnauthorizedException.java
 C:\Users\BenOA\CodexWorkDir\Testproject\animalfarm\backend\src\main\java\com\animalfarm\model\ActorRole.java
 C:\Users\BenOA\CodexWorkDir\Testproject\animalfarm\backend\src\main\java\com\animalfarm\model\Animal.java
 C:\Users\BenOA\CodexWorkDir\Testproject\animalfarm\backend\src\main\java\com\animalfarm\model\AnimalType.java

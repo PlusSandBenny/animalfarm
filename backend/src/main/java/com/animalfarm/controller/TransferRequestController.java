@@ -1,9 +1,11 @@
 package com.animalfarm.controller;
 
-import com.animalfarm.dto.AdminActionRequest;
+import com.animalfarm.auth.AuthContext;
+import com.animalfarm.auth.AuthSession;
 import com.animalfarm.dto.TransferRequestCreate;
 import com.animalfarm.dto.TransferRequestSummary;
 import com.animalfarm.service.TransferRequestService;
+import jakarta.servlet.http.HttpServletRequest;
 import jakarta.validation.Valid;
 import java.util.List;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -23,22 +25,26 @@ public class TransferRequestController {
     }
 
     @PostMapping
-    public TransferRequestSummary create(@Valid @RequestBody TransferRequestCreate request) {
-        return transferRequestService.create(request);
+    public TransferRequestSummary create(@Valid @RequestBody TransferRequestCreate request, HttpServletRequest httpRequest) {
+        AuthSession session = AuthContext.require(httpRequest);
+        return transferRequestService.create(request, session.role(), session.ownerId());
     }
 
     @GetMapping
-    public List<TransferRequestSummary> listAll() {
-        return transferRequestService.listAll();
+    public List<TransferRequestSummary> listAll(HttpServletRequest httpRequest) {
+        AuthSession session = AuthContext.require(httpRequest);
+        return transferRequestService.listAll(session.role());
     }
 
     @PostMapping("/{requestId}/approve")
-    public void approve(@PathVariable Long requestId, @Valid @RequestBody AdminActionRequest request) {
-        transferRequestService.approve(requestId, request);
+    public void approve(@PathVariable Long requestId, HttpServletRequest httpRequest) {
+        AuthSession session = AuthContext.require(httpRequest);
+        transferRequestService.approve(requestId, session.role());
     }
 
     @PostMapping("/{requestId}/reject")
-    public void reject(@PathVariable Long requestId, @Valid @RequestBody AdminActionRequest request) {
-        transferRequestService.reject(requestId, request);
+    public void reject(@PathVariable Long requestId, HttpServletRequest httpRequest) {
+        AuthSession session = AuthContext.require(httpRequest);
+        transferRequestService.reject(requestId, session.role());
     }
 }

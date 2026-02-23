@@ -1,5 +1,5 @@
-import { useEffect, useState } from "react";
-import { api } from "./api";
+import { useEffect, useMemo, useState } from "react";
+import { api, authApi } from "./api";
 
 const initialOwner = { firstName: "", lastName: "", email: "", phoneNumber: "", address: "" };
 const initialAnimal = {
@@ -10,15 +10,66 @@ const initialAnimal = {
   type: "CATTLE",
   image: "",
   parentId: "",
-  ownerId: "",
-  actorRole: "ADMIN"
+  ownerId: ""
 };
 
-export default function App() {
+function parseIds(value) {
+  return value.split(",").map((x) => Number(x.trim())).filter(Boolean);
+}
+
+function downloadBlob(blob, filename) {
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement("a");
+  a.href = url;
+  a.download = filename;
+  a.click();
+  URL.revokeObjectURL(url);
+}
+
+function LoginPage({ onLogin }) {
+  const [username, setUsername] = useState("");
+  const [password, setPassword] = useState("");
+  const [error, setError] = useState("");
+  const [loading, setLoading] = useState(false);
+
+  const demoUsers = "admin/admin123, owner1/owner123, owner2/owner123";
+
+  async function submit(e) {
+    e.preventDefault();
+    setError("");
+    setLoading(true);
+    try {
+      const session = await authApi.login(username, password);
+      onLogin(session);
+    } catch (err) {
+      setError(err.message);
+    } finally {
+      setLoading(false);
+    }
+  }
+
+  return (
+    <div className="page narrow">
+      <header className="hero">
+        <h1>Animal Farm Login</h1>
+        <p>Sign in to continue.</p>
+      </header>
+      <form className="card login" onSubmit={submit}>
+        <h2>Login</h2>
+        <input placeholder="Username" value={username} onChange={(e) => setUsername(e.target.value)} required />
+        <input placeholder="Password" type="password" value={password} onChange={(e) => setPassword(e.target.value)} required />
+        <button type="submit" disabled={loading}>{loading ? "Signing in..." : "Sign in"}</button>
+        <small>Demo users: {demoUsers}</small>
+      </form>
+      {error && <div className="notice error">{error}</div>}
+    </div>
+  );
+}
+
+function AdminPage({ session, onLogout }) {
   const [ownerForm, setOwnerForm] = useState(initialOwner);
   const [animalForm, setAnimalForm] = useState(initialAnimal);
-  const [transferForm, setTransferForm] = useState({ toOwnerId: "", animalIds: "", actorOwnerId: "", actorRole: "OWNER" });
-  const [trForm, setTrForm] = useState({ fromOwnerId: "", toOwnerId: "", animalIds: "", ownerEmailMessage: "", actorRole: "OWNER" });
+  const [transferForm, setTransferForm] = useState({ toOwnerId: "", animalIds: "" });
   const [reportForm, setReportForm] = useState({ ownerId: "", parentId: "" });
   const [animals, setAnimals] = useState([]);
   const [transferRequests, setTransferRequests] = useState([]);
@@ -34,12 +85,10 @@ export default function App() {
     refresh().catch((e) => setMessage(e.message));
   }, []);
 
-  const parseIds = (value) => value.split(",").map((x) => Number(x.trim())).filter(Boolean);
-
   async function onCreateOwner(e) {
     e.preventDefault();
     try {
-      await api.registerOwner(ownerForm, "ADMIN");
+      await api.registerOwner(ownerForm);
       setOwnerForm(initialOwner);
       setMessage("Owner registered.");
     } catch (err) {
@@ -68,11 +117,9 @@ export default function App() {
     try {
       await api.transferAnimals({
         toOwnerId: Number(transferForm.toOwnerId),
-        animalIds: parseIds(transferForm.animalIds),
-        actorOwnerId: Number(transferForm.actorOwnerId),
-        actorRole: transferForm.actorRole
+        animalIds: parseIds(transferForm.animalIds)
       });
-      setTransferForm({ toOwnerId: "", animalIds: "", actorOwnerId: "", actorRole: "OWNER" });
+      setTransferForm({ toOwnerId: "", animalIds: "" });
       await refresh();
       setMessage("Transfer completed.");
     } catch (err) {
@@ -80,39 +127,10 @@ export default function App() {
     }
   }
 
-  async function onCreateTransferRequest(e) {
-    e.preventDefault();
+  async function onReport(type, value, filename) {
     try {
-      await api.createTransferRequest({
-        fromOwnerId: Number(trForm.fromOwnerId),
-        toOwnerId: Number(trForm.toOwnerId),
-        animalIds: parseIds(trForm.animalIds),
-        ownerEmailMessage: trForm.ownerEmailMessage,
-        actorRole: trForm.actorRole
-      });
-      setTrForm({ fromOwnerId: "", toOwnerId: "", animalIds: "", ownerEmailMessage: "", actorRole: "OWNER" });
-      await refresh();
-      setMessage("Transfer request created.");
-    } catch (err) {
-      setMessage(err.message);
-    }
-  }
-
-  async function handleApprove(id) {
-    try {
-      await api.approveTransferRequest(id);
-      await refresh();
-      setMessage("Transfer request approved.");
-    } catch (err) {
-      setMessage(err.message);
-    }
-  }
-
-  async function handleReject(id) {
-    try {
-      await api.rejectTransferRequest(id);
-      await refresh();
-      setMessage("Transfer request rejected.");
+      const blob = await api.downloadReport(type, value);
+      downloadBlob(blob, filename);
     } catch (err) {
       setMessage(err.message);
     }
@@ -120,16 +138,18 @@ export default function App() {
 
   return (
     <div className="page">
-      <header className="hero">
-        <h1>Animal Farm Management</h1>
-        <p>Manage owners, animals, transfers, sales, and PDF reports.</p>
+      <header className="hero topbar">
+        <div>
+          <h1>Admin Dashboard</h1>
+          <p>{session.username} ({session.role})</p>
+        </div>
+        <button onClick={onLogout}>Logout</button>
       </header>
-
       {message && <div className="notice">{message}</div>}
 
       <section className="grid">
         <form className="card" onSubmit={onCreateOwner}>
-          <h2>Register Owner (Admin)</h2>
+          <h2>Register Owner</h2>
           <input placeholder="First name" value={ownerForm.firstName} onChange={(e) => setOwnerForm({ ...ownerForm, firstName: e.target.value })} required />
           <input placeholder="Last name" value={ownerForm.lastName} onChange={(e) => setOwnerForm({ ...ownerForm, lastName: e.target.value })} required />
           <input placeholder="Email" type="email" value={ownerForm.email} onChange={(e) => setOwnerForm({ ...ownerForm, email: e.target.value })} required />
@@ -139,7 +159,7 @@ export default function App() {
         </form>
 
         <form className="card" onSubmit={onCreateAnimal}>
-          <h2>Register Animal (Admin)</h2>
+          <h2>Register Animal</h2>
           <input placeholder="Animal ID" value={animalForm.animalId} onChange={(e) => setAnimalForm({ ...animalForm, animalId: e.target.value })} required />
           <input placeholder="Color" value={animalForm.color} onChange={(e) => setAnimalForm({ ...animalForm, color: e.target.value })} required />
           <input type="date" value={animalForm.dateOfBirth} onChange={(e) => setAnimalForm({ ...animalForm, dateOfBirth: e.target.value })} required />
@@ -158,48 +178,32 @@ export default function App() {
 
         <form className="card" onSubmit={onTransfer}>
           <h2>Transfer Animals</h2>
-          <select value={transferForm.actorRole} onChange={(e) => setTransferForm({ ...transferForm, actorRole: e.target.value })}>
-            <option value="OWNER">OWNER</option>
-            <option value="ADMIN">ADMIN</option>
-          </select>
-          <input placeholder="Actor Owner ID" value={transferForm.actorOwnerId} onChange={(e) => setTransferForm({ ...transferForm, actorOwnerId: e.target.value })} required />
           <input placeholder="To Owner ID" value={transferForm.toOwnerId} onChange={(e) => setTransferForm({ ...transferForm, toOwnerId: e.target.value })} required />
           <input placeholder="Animal DB IDs (comma-separated)" value={transferForm.animalIds} onChange={(e) => setTransferForm({ ...transferForm, animalIds: e.target.value })} required />
           <button type="submit">Transfer</button>
         </form>
 
-        <form className="card" onSubmit={onCreateTransferRequest}>
-          <h2>Owner Email Transfer Request</h2>
-          <input placeholder="From Owner ID" value={trForm.fromOwnerId} onChange={(e) => setTrForm({ ...trForm, fromOwnerId: e.target.value })} required />
-          <input placeholder="To Owner ID" value={trForm.toOwnerId} onChange={(e) => setTrForm({ ...trForm, toOwnerId: e.target.value })} required />
-          <input placeholder="Animal DB IDs (comma-separated)" value={trForm.animalIds} onChange={(e) => setTrForm({ ...trForm, animalIds: e.target.value })} required />
-          <textarea placeholder="Owner email message to admin" value={trForm.ownerEmailMessage} onChange={(e) => setTrForm({ ...trForm, ownerEmailMessage: e.target.value })} required />
-          <button type="submit">Create Request</button>
-        </form>
+        <div className="card">
+          <h2>Admin Reports</h2>
+          <input placeholder="Owner ID" value={reportForm.ownerId} onChange={(e) => setReportForm({ ...reportForm, ownerId: e.target.value })} />
+          <button type="button" onClick={() => onReport("ownerVsAnimal", reportForm.ownerId, `owner-vs-animal-${reportForm.ownerId}.pdf`)}>Owner vs Animal</button>
+          <button type="button" onClick={() => onReport("owner", reportForm.ownerId, `owner-animal-${reportForm.ownerId}.pdf`)}>Owner Animal</button>
+          <input placeholder="Parent Animal DB ID" value={reportForm.parentId} onChange={(e) => setReportForm({ ...reportForm, parentId: e.target.value })} />
+          <button type="button" onClick={() => onReport("parentVsAnimal", reportForm.parentId, `parent-vs-animal-${reportForm.parentId}.pdf`)}>Parent vs Animal</button>
+        </div>
       </section>
 
       <section className="card full">
         <h2>Animals</h2>
         <table>
           <thead>
-            <tr>
-              <th>DB ID</th>
-              <th>Animal ID</th>
-              <th>Type</th>
-              <th>Owner ID</th>
-              <th>Sold</th>
-              <th>Action</th>
-            </tr>
+            <tr><th>DB ID</th><th>Animal ID</th><th>Type</th><th>Owner ID</th><th>Sold</th><th>Action</th></tr>
           </thead>
           <tbody>
             {animals.map((a) => (
               <tr key={a.id}>
-                <td>{a.id}</td>
-                <td>{a.animalId}</td>
-                <td>{a.type}</td>
-                <td>{a.ownerId}</td>
-                <td>{String(a.sold)}</td>
-                <td><button onClick={() => api.sellAnimal(a.id).then(refresh).catch((e) => setMessage(e.message))}>Sell (Admin)</button></td>
+                <td>{a.id}</td><td>{a.animalId}</td><td>{a.type}</td><td>{a.ownerId}</td><td>{String(a.sold)}</td>
+                <td><button onClick={() => api.sellAnimal(a.id).then(refresh).catch((e) => setMessage(e.message))}>Sell</button></td>
               </tr>
             ))}
           </tbody>
@@ -210,45 +214,150 @@ export default function App() {
         <h2>Transfer Requests</h2>
         <table>
           <thead>
-            <tr>
-              <th>ID</th>
-              <th>From</th>
-              <th>To</th>
-              <th>Animals</th>
-              <th>Status</th>
-              <th>Actions</th>
-            </tr>
+            <tr><th>ID</th><th>From</th><th>To</th><th>Animals</th><th>Status</th><th>Actions</th></tr>
           </thead>
           <tbody>
             {transferRequests.map((tr) => (
               <tr key={tr.id}>
-                <td>{tr.id}</td>
-                <td>{tr.fromOwnerId}</td>
-                <td>{tr.toOwnerId}</td>
-                <td>{tr.animalIds.join(", ")}</td>
-                <td>{tr.status}</td>
+                <td>{tr.id}</td><td>{tr.fromOwnerId}</td><td>{tr.toOwnerId}</td><td>{tr.animalIds.join(", ")}</td><td>{tr.status}</td>
                 <td>
-                  <button onClick={() => handleApprove(tr.id)}>Approve</button>
-                  <button onClick={() => handleReject(tr.id)}>Reject</button>
+                  <button onClick={() => api.approveTransferRequest(tr.id).then(refresh).catch((e) => setMessage(e.message))}>Approve</button>
+                  <button onClick={() => api.rejectTransferRequest(tr.id).then(refresh).catch((e) => setMessage(e.message))}>Reject</button>
                 </td>
               </tr>
             ))}
           </tbody>
         </table>
       </section>
+    </div>
+  );
+}
+
+function OwnerPage({ session, onLogout }) {
+  const [animals, setAnimals] = useState([]);
+  const [transferForm, setTransferForm] = useState({ toOwnerId: "", animalIds: "" });
+  const [requestForm, setRequestForm] = useState({ toOwnerId: "", animalIds: "", ownerEmailMessage: "" });
+  const [message, setMessage] = useState("");
+
+  const ownerId = useMemo(() => session.ownerId, [session.ownerId]);
+
+  const refresh = async () => {
+    const list = await api.getAnimals();
+    setAnimals(list);
+  };
+
+  useEffect(() => {
+    refresh().catch((e) => setMessage(e.message));
+  }, []);
+
+  async function onTransfer(e) {
+    e.preventDefault();
+    try {
+      await api.transferAnimals({
+        toOwnerId: Number(transferForm.toOwnerId),
+        animalIds: parseIds(transferForm.animalIds)
+      });
+      setTransferForm({ toOwnerId: "", animalIds: "" });
+      await refresh();
+      setMessage("Transfer completed.");
+    } catch (err) {
+      setMessage(err.message);
+    }
+  }
+
+  async function onTransferRequest(e) {
+    e.preventDefault();
+    try {
+      await api.createTransferRequest({
+        fromOwnerId: ownerId,
+        toOwnerId: Number(requestForm.toOwnerId),
+        animalIds: parseIds(requestForm.animalIds),
+        ownerEmailMessage: requestForm.ownerEmailMessage
+      });
+      setRequestForm({ toOwnerId: "", animalIds: "", ownerEmailMessage: "" });
+      setMessage("Transfer request sent to admin.");
+    } catch (err) {
+      setMessage(err.message);
+    }
+  }
+
+  async function downloadOwnerReport() {
+    try {
+      const blob = await api.downloadReport("owner", ownerId);
+      downloadBlob(blob, `owner-animal-${ownerId}.pdf`);
+    } catch (err) {
+      setMessage(err.message);
+    }
+  }
+
+  return (
+    <div className="page">
+      <header className="hero topbar">
+        <div>
+          <h1>Owner Dashboard</h1>
+          <p>{session.username} ({session.role}) - Owner ID: {ownerId}</p>
+        </div>
+        <button onClick={onLogout}>Logout</button>
+      </header>
+      {message && <div className="notice">{message}</div>}
+
+      <section className="grid">
+        <form className="card" onSubmit={onTransfer}>
+          <h2>Transfer Your Animals</h2>
+          <input placeholder="To Owner ID" value={transferForm.toOwnerId} onChange={(e) => setTransferForm({ ...transferForm, toOwnerId: e.target.value })} required />
+          <input placeholder="Animal DB IDs (comma-separated)" value={transferForm.animalIds} onChange={(e) => setTransferForm({ ...transferForm, animalIds: e.target.value })} required />
+          <button type="submit">Transfer</button>
+        </form>
+
+        <form className="card" onSubmit={onTransferRequest}>
+          <h2>Email Request to Admin</h2>
+          <input value={ownerId || ""} readOnly />
+          <input placeholder="To Owner ID" value={requestForm.toOwnerId} onChange={(e) => setRequestForm({ ...requestForm, toOwnerId: e.target.value })} required />
+          <input placeholder="Animal DB IDs (comma-separated)" value={requestForm.animalIds} onChange={(e) => setRequestForm({ ...requestForm, animalIds: e.target.value })} required />
+          <textarea placeholder="Message to administrator" value={requestForm.ownerEmailMessage} onChange={(e) => setRequestForm({ ...requestForm, ownerEmailMessage: e.target.value })} required />
+          <button type="submit">Send Request</button>
+        </form>
+
+        <div className="card">
+          <h2>Your Report</h2>
+          <button onClick={downloadOwnerReport}>Download Owner Animal Report</button>
+        </div>
+      </section>
 
       <section className="card full">
-        <h2>Reports (PDF)</h2>
-        <div className="report-row">
-          <input placeholder="Owner ID" value={reportForm.ownerId} onChange={(e) => setReportForm({ ...reportForm, ownerId: e.target.value })} />
-          <a href={api.reportUrl("ownerVsAnimal", reportForm.ownerId)} target="_blank" rel="noreferrer">Owner vs Animal</a>
-          <a href={api.reportUrl("owner", reportForm.ownerId)} target="_blank" rel="noreferrer">Owner Animal Report</a>
-        </div>
-        <div className="report-row">
-          <input placeholder="Parent Animal DB ID" value={reportForm.parentId} onChange={(e) => setReportForm({ ...reportForm, parentId: e.target.value })} />
-          <a href={api.reportUrl("parentVsAnimal", reportForm.parentId)} target="_blank" rel="noreferrer">Parent vs Animal</a>
-        </div>
+        <h2>Your Animals</h2>
+        <table>
+          <thead>
+            <tr><th>DB ID</th><th>Animal ID</th><th>Type</th><th>Breed</th><th>Sold</th></tr>
+          </thead>
+          <tbody>
+            {animals.map((a) => (
+              <tr key={a.id}>
+                <td>{a.id}</td><td>{a.animalId}</td><td>{a.type}</td><td>{a.breed}</td><td>{String(a.sold)}</td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
       </section>
     </div>
   );
+}
+
+export default function App() {
+  const [session, setSession] = useState(authApi.currentUser());
+
+  async function logout() {
+    await authApi.logout();
+    setSession(null);
+  }
+
+  if (!session) {
+    return <LoginPage onLogin={setSession} />;
+  }
+
+  if (session.role === "ADMIN") {
+    return <AdminPage session={session} onLogout={logout} />;
+  }
+
+  return <OwnerPage session={session} onLogout={logout} />;
 }

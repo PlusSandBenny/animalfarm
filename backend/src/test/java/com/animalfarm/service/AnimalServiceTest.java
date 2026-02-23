@@ -7,6 +7,7 @@ import static org.mockito.Mockito.when;
 import com.animalfarm.dto.AnimalRequest;
 import com.animalfarm.dto.TransferAnimalsRequest;
 import com.animalfarm.exception.ApiException;
+import com.animalfarm.model.ActorRole;
 import com.animalfarm.model.Animal;
 import com.animalfarm.model.AnimalType;
 import com.animalfarm.model.Owner;
@@ -48,11 +49,10 @@ class AnimalServiceTest {
                 AnimalType.CATTLE,
                 null,
                 null,
-                1L,
-                "OWNER"
+                1L
         );
 
-        ApiException ex = assertThrows(ApiException.class, () -> animalService.registerAnimal(request));
+        ApiException ex = assertThrows(ApiException.class, () -> animalService.registerAnimal(request, ActorRole.OWNER));
         assertEquals("This action requires ADMIN role.", ex.getMessage());
     }
 
@@ -67,10 +67,8 @@ class AnimalServiceTest {
 
         var result = animalService.transferAnimals(new TransferAnimalsRequest(
                 2L,
-                List.of(10L),
-                1L,
-                "OWNER"
-        ));
+                List.of(10L)
+        ), ActorRole.OWNER, 1L);
 
         assertEquals(1, result.size());
         assertEquals(2L, animal.getOwner().getId());
@@ -88,17 +86,15 @@ class AnimalServiceTest {
 
         ApiException ex = assertThrows(ApiException.class, () -> animalService.transferAnimals(new TransferAnimalsRequest(
                 2L,
-                List.of(11L),
-                99L,
-                "OWNER"
-        )));
+                List.of(11L)
+        ), ActorRole.OWNER, 99L));
 
         assertEquals("Transfer denied. You are not owner of animal id A-011", ex.getMessage());
     }
 
     @Test
     void sellAnimal_requiresAdminRole() {
-        ApiException ex = assertThrows(ApiException.class, () -> animalService.sellAnimalToMarket(12L, "OWNER"));
+        ApiException ex = assertThrows(ApiException.class, () -> animalService.sellAnimalToMarket(12L, ActorRole.OWNER));
         assertEquals("This action requires ADMIN role.", ex.getMessage());
     }
 

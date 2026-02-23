@@ -68,7 +68,19 @@ Vagrant.configure("2") do |config|
 
         COMPOSE_DIR="$(dirname "${COMPOSE_PATH}")"
         cd "${COMPOSE_DIR}"
-        docker compose -f "${COMPOSE_PATH}" up -d --build
+
+        ATTEMPTS=3
+        for i in $(seq 1 ${ATTEMPTS}); do
+          if docker compose -f "${COMPOSE_PATH}" up -d --build; then
+            break
+          fi
+          if [ "${i}" -eq "${ATTEMPTS}" ]; then
+            echo "docker compose build/deploy failed after ${ATTEMPTS} attempts."
+            exit 1
+          fi
+          echo "docker compose failed (attempt ${i}/${ATTEMPTS}). Retrying in 20s..."
+          sleep 20
+        done
 
         echo "Animal Farm stack deployed in VM."
         echo "Branch: ${APP_BRANCH}"
