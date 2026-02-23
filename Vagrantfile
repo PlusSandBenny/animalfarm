@@ -1,6 +1,6 @@
 Vagrant.configure("2") do |config|
   config.vm.define "animalfarm" do |animalfarm|
-    app_branch = ENV.fetch("APP_BRANCH", "dev")
+    app_branch = ENV.fetch("APP_BRANCH", "main")
 
     animalfarm.vm.box = "ubuntu/jammy64"
     animalfarm.vm.hostname = "animalfarm-dvm"
