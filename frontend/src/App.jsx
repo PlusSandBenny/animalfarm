@@ -115,6 +115,7 @@ function ForcePasswordResetPage({ session, onPasswordChanged, onLogout }) {
 }
 
 function AdminPage({ session, onLogout }) {
+  const [adminView, setAdminView] = useState("dashboard");
   const [ownerForm, setOwnerForm] = useState(initialOwner);
   const [animalForm, setAnimalForm] = useState(initialAnimal);
   const [transferForm, setTransferForm] = useState({ toOwnerId: "", animalIds: "" });
@@ -247,25 +248,37 @@ function AdminPage({ session, onLogout }) {
     <div className="page">
       <header className="hero topbar">
         <div>
-          <h1>Admin Dashboard</h1>
+          <h1>{adminView === "registerOwner" ? "Register Owner" : "Admin Dashboard"}</h1>
           <p>{session.username} ({session.role})</p>
         </div>
-        <button onClick={onLogout}>Logout</button>
+        <div>
+          {adminView === "registerOwner" ? (
+            <button onClick={() => setAdminView("dashboard")}>Back to Dashboard</button>
+          ) : (
+            <button onClick={() => setAdminView("registerOwner")}>Owner Registration Page</button>
+          )}
+          <button onClick={onLogout}>Logout</button>
+        </div>
       </header>
       {message && <div className="notice">{message}</div>}
 
+      {adminView === "registerOwner" ? (
+        <section className="grid">
+          <form className="card" onSubmit={onCreateOwner}>
+            <h2>Register Owner</h2>
+            <input placeholder="First name" value={ownerForm.firstName} onChange={(e) => setOwnerForm({ ...ownerForm, firstName: e.target.value })} required />
+            <input placeholder="Last name" value={ownerForm.lastName} onChange={(e) => setOwnerForm({ ...ownerForm, lastName: e.target.value })} required />
+            <input placeholder="Email" type="email" value={ownerForm.email} onChange={(e) => setOwnerForm({ ...ownerForm, email: e.target.value })} required />
+            <input placeholder="Phone" value={ownerForm.phoneNumber} onChange={(e) => setOwnerForm({ ...ownerForm, phoneNumber: e.target.value })} required />
+            <input placeholder="Address" value={ownerForm.address} onChange={(e) => setOwnerForm({ ...ownerForm, address: e.target.value })} required />
+            <input placeholder="Username" value={ownerForm.username} onChange={(e) => setOwnerForm({ ...ownerForm, username: e.target.value })} required />
+            <input placeholder="Temporary password" type="password" value={ownerForm.password} onChange={(e) => setOwnerForm({ ...ownerForm, password: e.target.value })} required />
+            <button type="submit">Create Owner</button>
+          </form>
+        </section>
+      ) : (
+        <>
       <section className="grid">
-        <form className="card" onSubmit={onCreateOwner}>
-          <h2>Register Owner</h2>
-          <input placeholder="First name" value={ownerForm.firstName} onChange={(e) => setOwnerForm({ ...ownerForm, firstName: e.target.value })} required />
-          <input placeholder="Last name" value={ownerForm.lastName} onChange={(e) => setOwnerForm({ ...ownerForm, lastName: e.target.value })} required />
-          <input placeholder="Email" type="email" value={ownerForm.email} onChange={(e) => setOwnerForm({ ...ownerForm, email: e.target.value })} required />
-          <input placeholder="Phone" value={ownerForm.phoneNumber} onChange={(e) => setOwnerForm({ ...ownerForm, phoneNumber: e.target.value })} required />
-          <input placeholder="Address" value={ownerForm.address} onChange={(e) => setOwnerForm({ ...ownerForm, address: e.target.value })} required />
-          <input placeholder="Username" value={ownerForm.username} onChange={(e) => setOwnerForm({ ...ownerForm, username: e.target.value })} required />
-          <input placeholder="Temporary password" type="password" value={ownerForm.password} onChange={(e) => setOwnerForm({ ...ownerForm, password: e.target.value })} required />
-          <button type="submit">Create Owner</button>
-        </form>
 
         <form className="card" onSubmit={onCreateAnimal}>
           <h2>Register Animal</h2>
@@ -408,6 +421,8 @@ function AdminPage({ session, onLogout }) {
           </tbody>
         </table>
       </section>
+      </>
+      )}
     </div>
   );
 }
