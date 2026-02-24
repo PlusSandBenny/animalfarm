@@ -137,6 +137,8 @@ function AdminPage({ session, onLogout }) {
   const [invoiceOwnerId, setInvoiceOwnerId] = useState("");
   const [ownerInvoice, setOwnerInvoice] = useState(null);
   const [allOwnersInvoices, setAllOwnersInvoices] = useState([]);
+  const [generationPeriod, setGenerationPeriod] = useState({ year: "", month: "" });
+  const [generatedInvoices, setGeneratedInvoices] = useState([]);
   const [animals, setAnimals] = useState([]);
   const [transferRequests, setTransferRequests] = useState([]);
   const [message, setMessage] = useState("");
@@ -326,6 +328,31 @@ function AdminPage({ session, onLogout }) {
     }
   }
 
+  async function onGenerateAndEmailInvoices(e) {
+    e.preventDefault();
+    try {
+      const payload = {
+        year: generationPeriod.year ? Number(generationPeriod.year) : null,
+        month: generationPeriod.month ? Number(generationPeriod.month) : null
+      };
+      const rows = await api.generateAndEmailMonthlyInvoices(payload);
+      setGeneratedInvoices(rows);
+      setMessage(`Generated ${rows.length} invoice(s) and attempted email delivery.`);
+    } catch (err) {
+      setMessage(err.message);
+    }
+  }
+
+  async function onMarkInvoicePaid(invoiceId) {
+    try {
+      await api.markInvoicePaid(invoiceId);
+      setGeneratedInvoices((rows) => rows.map((r) => (r.invoiceId === invoiceId ? { ...r, paid: true } : r)));
+      setMessage(`Invoice ${invoiceId} marked as paid.`);
+    } catch (err) {
+      setMessage(err.message);
+    }
+  }
+
   return (
     <div className="page">
       <header className="hero topbar">
@@ -431,6 +458,21 @@ function AdminPage({ session, onLogout }) {
               <h2>All Owners Monthly Invoices</h2>
               <button type="button" onClick={onLoadAllInvoices}>Load All</button>
             </div>
+
+            <form className="card" onSubmit={onGenerateAndEmailInvoices}>
+              <h2>Generate + Email Owner Invoices</h2>
+              <input
+                placeholder="Year (optional, e.g 2026)"
+                value={generationPeriod.year}
+                onChange={(e) => setGenerationPeriod({ ...generationPeriod, year: e.target.value })}
+              />
+              <input
+                placeholder="Month 1-12 (optional)"
+                value={generationPeriod.month}
+                onChange={(e) => setGenerationPeriod({ ...generationPeriod, month: e.target.value })}
+              />
+              <button type="submit">Generate & Send</button>
+            </form>
           </section>
 
           <section className="card full">
@@ -457,6 +499,46 @@ function AdminPage({ session, onLogout }) {
                     <td>{inv.ramCount}</td>
                     <td>{inv.pigCount}</td>
                     <td>{Number(inv.totalAmount).toFixed(2)}</td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </section>
+
+          <section className="card full">
+            <h2>Generated Invoice Email Status</h2>
+            <table>
+              <thead>
+                <tr>
+                  <th>Invoice ID</th>
+                  <th>Owner ID</th>
+                  <th>Firstname</th>
+                  <th>Email</th>
+                  <th>Period</th>
+                  <th>Current</th>
+                  <th>Previous Unpaid</th>
+                  <th>Total Due</th>
+                  <th>Paid</th>
+                  <th>Email Sent</th>
+                  <th>Email Error</th>
+                  <th>Action</th>
+                </tr>
+              </thead>
+              <tbody>
+                {generatedInvoices.map((inv) => (
+                  <tr key={inv.invoiceId}>
+                    <td>{inv.invoiceId}</td>
+                    <td>{inv.ownerId}</td>
+                    <td>{inv.ownerFirstName}</td>
+                    <td>{inv.ownerEmail}</td>
+                    <td>{inv.periodYear}-{String(inv.periodMonth).padStart(2, "0")}</td>
+                    <td>{Number(inv.currentCharge).toFixed(2)}</td>
+                    <td>{Number(inv.previousUnpaidBalance).toFixed(2)}</td>
+                    <td>{Number(inv.totalDue).toFixed(2)}</td>
+                    <td>{String(inv.paid)}</td>
+                    <td>{String(inv.emailSent)}</td>
+                    <td>{inv.emailError || ""}</td>
+                    <td>{inv.paid ? "Paid" : <button onClick={() => onMarkInvoicePaid(inv.invoiceId)}>Mark Paid</button>}</td>
                   </tr>
                 ))}
               </tbody>

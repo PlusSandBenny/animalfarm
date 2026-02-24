@@ -22,6 +22,8 @@ C:\Users\BenOA\CodexWorkDir\Testproject\animalfarm\backend\src\main\java\com\ani
 C:\Users\BenOA\CodexWorkDir\Testproject\animalfarm\backend\src\main\java\com\animalfarm\dto\AdminActionRequest.java
 C:\Users\BenOA\CodexWorkDir\Testproject\animalfarm\backend\src\main\java\com\animalfarm\dto\AnimalRequest.java
 C:\Users\BenOA\CodexWorkDir\Testproject\animalfarm\backend\src\main\java\com\animalfarm\dto\AnimalSummary.java
+C:\Users\BenOA\CodexWorkDir\Testproject\animalfarm\backend\src\main\java\com\animalfarm\dto\GeneratedInvoiceSummary.java
+C:\Users\BenOA\CodexWorkDir\Testproject\animalfarm\backend\src\main\java\com\animalfarm\dto\GenerateMonthlyInvoicesRequest.java
 C:\Users\BenOA\CodexWorkDir\Testproject\animalfarm\backend\src\main\java\com\animalfarm\dto\InvoiceParameterDto.java
 C:\Users\BenOA\CodexWorkDir\Testproject\animalfarm\backend\src\main\java\com\animalfarm\dto\InvoiceParameterUpdateRequest.java
 C:\Users\BenOA\CodexWorkDir\Testproject\animalfarm\backend\src\main\java\com\animalfarm\dto\MonthlyInvoiceResponse.java
@@ -41,6 +43,7 @@ C:\Users\BenOA\CodexWorkDir\Testproject\animalfarm\backend\src\main\java\com\ani
 C:\Users\BenOA\CodexWorkDir\Testproject\animalfarm\backend\src\main\java\com\animalfarm\model\AuditLog.java
 C:\Users\BenOA\CodexWorkDir\Testproject\animalfarm\backend\src\main\java\com\animalfarm\model\InvoiceParameter.java
 C:\Users\BenOA\CodexWorkDir\Testproject\animalfarm\backend\src\main\java\com\animalfarm\model\Owner.java
+C:\Users\BenOA\CodexWorkDir\Testproject\animalfarm\backend\src\main\java\com\animalfarm\model\OwnerInvoice.java
 C:\Users\BenOA\CodexWorkDir\Testproject\animalfarm\backend\src\main\java\com\animalfarm\model\RefreshToken.java
 C:\Users\BenOA\CodexWorkDir\Testproject\animalfarm\backend\src\main\java\com\animalfarm\model\TransferRequest.java
 C:\Users\BenOA\CodexWorkDir\Testproject\animalfarm\backend\src\main\java\com\animalfarm\model\TransferStatus.java
@@ -48,11 +51,13 @@ C:\Users\BenOA\CodexWorkDir\Testproject\animalfarm\backend\src\main\java\com\ani
 C:\Users\BenOA\CodexWorkDir\Testproject\animalfarm\backend\src\main\java\com\animalfarm\repository\AppUserRepository.java
 C:\Users\BenOA\CodexWorkDir\Testproject\animalfarm\backend\src\main\java\com\animalfarm\repository\AuditLogRepository.java
 C:\Users\BenOA\CodexWorkDir\Testproject\animalfarm\backend\src\main\java\com\animalfarm\repository\InvoiceParameterRepository.java
+C:\Users\BenOA\CodexWorkDir\Testproject\animalfarm\backend\src\main\java\com\animalfarm\repository\OwnerInvoiceRepository.java
 C:\Users\BenOA\CodexWorkDir\Testproject\animalfarm\backend\src\main\java\com\animalfarm\repository\OwnerRepository.java
 C:\Users\BenOA\CodexWorkDir\Testproject\animalfarm\backend\src\main\java\com\animalfarm\repository\RefreshTokenRepository.java
 C:\Users\BenOA\CodexWorkDir\Testproject\animalfarm\backend\src\main\java\com\animalfarm\repository\TransferRequestRepository.java
 C:\Users\BenOA\CodexWorkDir\Testproject\animalfarm\backend\src\main\java\com\animalfarm\service\AnimalService.java
 C:\Users\BenOA\CodexWorkDir\Testproject\animalfarm\backend\src\main\java\com\animalfarm\service\AuditLogService.java
+C:\Users\BenOA\CodexWorkDir\Testproject\animalfarm\backend\src\main\java\com\animalfarm\service\InvoiceEmailService.java
 C:\Users\BenOA\CodexWorkDir\Testproject\animalfarm\backend\src\main\java\com\animalfarm\service\InvoiceParameterService.java
 C:\Users\BenOA\CodexWorkDir\Testproject\animalfarm\backend\src\main\java\com\animalfarm\service\MonthlyInvoiceService.java
 C:\Users\BenOA\CodexWorkDir\Testproject\animalfarm\backend\src\main\java\com\animalfarm\service\OwnerService.java

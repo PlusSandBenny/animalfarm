@@ -148,6 +148,8 @@ export const api = {
   updateInvoiceParameters: (payload) => request("/invoice-parameters", { method: "PUT", body: JSON.stringify(payload) }),
   getMonthlyOwnerInvoice: (ownerId) => request(`/invoices/monthly/owner/${ownerId}`),
   getMonthlyOwnersInvoices: () => request("/invoices/monthly/owners"),
+  generateAndEmailMonthlyInvoices: (payload) => request("/invoices/monthly/generate-and-email", { method: "POST", body: JSON.stringify(payload || {}) }),
+  markInvoicePaid: (invoiceId) => request(`/invoices/${invoiceId}/mark-paid`, { method: "POST" }),
   downloadReport: async (type, value) => {
     let path = `/reports/owner/${value}`;
     if (type === "ownerVsAnimal") path = `/reports/owner-vs-animal?ownerId=${value}`;
