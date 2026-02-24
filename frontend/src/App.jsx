@@ -248,14 +248,23 @@ function AdminPage({ session, onLogout }) {
     <div className="page">
       <header className="hero topbar">
         <div>
-          <h1>{adminView === "registerOwner" ? "Register Owner" : "Admin Dashboard"}</h1>
+          <h1>
+            {adminView === "registerOwner"
+              ? "Register Owner"
+              : adminView === "registerAnimal"
+                ? "Register Animal"
+                : "Admin Dashboard"}
+          </h1>
           <p>{session.username} ({session.role})</p>
         </div>
         <div>
-          {adminView === "registerOwner" ? (
+          {adminView !== "dashboard" ? (
             <button onClick={() => setAdminView("dashboard")}>Back to Dashboard</button>
           ) : (
-            <button onClick={() => setAdminView("registerOwner")}>Owner Registration Page</button>
+            <>
+              <button onClick={() => setAdminView("registerOwner")}>Owner Registration Page</button>
+              <button onClick={() => setAdminView("registerAnimal")}>Animal Registration Page</button>
+            </>
           )}
           <button onClick={onLogout}>Logout</button>
         </div>
@@ -276,27 +285,29 @@ function AdminPage({ session, onLogout }) {
             <button type="submit">Create Owner</button>
           </form>
         </section>
+      ) : adminView === "registerAnimal" ? (
+        <section className="grid">
+          <form className="card" onSubmit={onCreateAnimal}>
+            <h2>Register Animal</h2>
+            <input placeholder="Animal ID" value={animalForm.animalId} onChange={(e) => setAnimalForm({ ...animalForm, animalId: e.target.value })} required />
+            <input placeholder="Color" value={animalForm.color} onChange={(e) => setAnimalForm({ ...animalForm, color: e.target.value })} required />
+            <input type="date" value={animalForm.dateOfBirth} onChange={(e) => setAnimalForm({ ...animalForm, dateOfBirth: e.target.value })} required />
+            <input placeholder="Breed" value={animalForm.breed} onChange={(e) => setAnimalForm({ ...animalForm, breed: e.target.value })} required />
+            <select value={animalForm.type} onChange={(e) => setAnimalForm({ ...animalForm, type: e.target.value })}>
+              <option value="CATTLE">CATTLE</option>
+              <option value="GOAT">GOAT</option>
+              <option value="RAM">RAM</option>
+              <option value="PIG">PIG</option>
+            </select>
+            <input placeholder="Image URL" value={animalForm.image} onChange={(e) => setAnimalForm({ ...animalForm, image: e.target.value })} />
+            <input placeholder="Parent Animal DB Id (optional)" value={animalForm.parentId} onChange={(e) => setAnimalForm({ ...animalForm, parentId: e.target.value })} />
+            <input placeholder="Owner ID" value={animalForm.ownerId} onChange={(e) => setAnimalForm({ ...animalForm, ownerId: e.target.value })} required />
+            <button type="submit">Create Animal</button>
+          </form>
+        </section>
       ) : (
         <>
       <section className="grid">
-
-        <form className="card" onSubmit={onCreateAnimal}>
-          <h2>Register Animal</h2>
-          <input placeholder="Animal ID" value={animalForm.animalId} onChange={(e) => setAnimalForm({ ...animalForm, animalId: e.target.value })} required />
-          <input placeholder="Color" value={animalForm.color} onChange={(e) => setAnimalForm({ ...animalForm, color: e.target.value })} required />
-          <input type="date" value={animalForm.dateOfBirth} onChange={(e) => setAnimalForm({ ...animalForm, dateOfBirth: e.target.value })} required />
-          <input placeholder="Breed" value={animalForm.breed} onChange={(e) => setAnimalForm({ ...animalForm, breed: e.target.value })} required />
-          <select value={animalForm.type} onChange={(e) => setAnimalForm({ ...animalForm, type: e.target.value })}>
-            <option value="CATTLE">CATTLE</option>
-            <option value="GOAT">GOAT</option>
-            <option value="RAM">RAM</option>
-            <option value="PIG">PIG</option>
-          </select>
-          <input placeholder="Image URL" value={animalForm.image} onChange={(e) => setAnimalForm({ ...animalForm, image: e.target.value })} />
-          <input placeholder="Parent Animal DB Id (optional)" value={animalForm.parentId} onChange={(e) => setAnimalForm({ ...animalForm, parentId: e.target.value })} />
-          <input placeholder="Owner ID" value={animalForm.ownerId} onChange={(e) => setAnimalForm({ ...animalForm, ownerId: e.target.value })} required />
-          <button type="submit">Create Animal</button>
-        </form>
 
         <form className="card" onSubmit={onTransfer}>
           <h2>Transfer Animals</h2>
