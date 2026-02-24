@@ -190,6 +190,10 @@ Services in compose:
 - `GET /api/owners/search?ownerId=...`
 - `GET /api/owners/search?firstName=...`
 - `PUT /api/owners/{ownerId}`
+- `GET /api/invoice-parameters`
+- `PUT /api/invoice-parameters`
+- `GET /api/invoices/monthly/owner/{ownerId}`
+- `GET /api/invoices/monthly/owners`
 - `POST /api/animals`
 - `GET /api/animals`
 - `POST /api/animals/transfer`

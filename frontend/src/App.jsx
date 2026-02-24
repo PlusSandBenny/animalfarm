@@ -12,6 +12,16 @@ const initialAnimal = {
   parentId: "",
   ownerId: ""
 };
+const initialInvoiceParams = {
+  cattleMonthlyFeeds: "0",
+  cattleMonthlyMedication: "0",
+  goatMonthlyFeeds: "0",
+  goatMonthlyMedication: "0",
+  pigMonthlyFeeds: "0",
+  pigMonthlyMedication: "0",
+  ramMonthlyFeeds: "0",
+  ramMonthlyMedication: "0"
+};
 
 function parseIds(value) {
   return value.split(",").map((x) => Number(x.trim())).filter(Boolean);
@@ -123,6 +133,10 @@ function AdminPage({ session, onLogout }) {
   const [ownerResults, setOwnerResults] = useState([]);
   const [editingOwner, setEditingOwner] = useState(null);
   const [reportForm, setReportForm] = useState({ ownerId: "", parentId: "" });
+  const [invoiceParamsForm, setInvoiceParamsForm] = useState(initialInvoiceParams);
+  const [invoiceOwnerId, setInvoiceOwnerId] = useState("");
+  const [ownerInvoice, setOwnerInvoice] = useState(null);
+  const [allOwnersInvoices, setAllOwnersInvoices] = useState([]);
   const [animals, setAnimals] = useState([]);
   const [transferRequests, setTransferRequests] = useState([]);
   const [message, setMessage] = useState("");
@@ -136,6 +150,23 @@ function AdminPage({ session, onLogout }) {
   useEffect(() => {
     refresh().catch((e) => setMessage(e.message));
   }, []);
+
+  useEffect(() => {
+    if (adminView === "invoiceConfig") {
+      api.getInvoiceParameters()
+        .then((p) => setInvoiceParamsForm({
+          cattleMonthlyFeeds: String(p.cattleMonthlyFeeds ?? 0),
+          cattleMonthlyMedication: String(p.cattleMonthlyMedication ?? 0),
+          goatMonthlyFeeds: String(p.goatMonthlyFeeds ?? 0),
+          goatMonthlyMedication: String(p.goatMonthlyMedication ?? 0),
+          pigMonthlyFeeds: String(p.pigMonthlyFeeds ?? 0),
+          pigMonthlyMedication: String(p.pigMonthlyMedication ?? 0),
+          ramMonthlyFeeds: String(p.ramMonthlyFeeds ?? 0),
+          ramMonthlyMedication: String(p.ramMonthlyMedication ?? 0)
+        }))
+        .catch((e) => setMessage(e.message));
+    }
+  }, [adminView]);
 
   async function onCreateOwner(e) {
     e.preventDefault();
@@ -244,6 +275,57 @@ function AdminPage({ session, onLogout }) {
     }
   }
 
+  async function onSaveInvoiceParams(e) {
+    e.preventDefault();
+    try {
+      const payload = {
+        cattleMonthlyFeeds: Number(invoiceParamsForm.cattleMonthlyFeeds),
+        cattleMonthlyMedication: Number(invoiceParamsForm.cattleMonthlyMedication),
+        goatMonthlyFeeds: Number(invoiceParamsForm.goatMonthlyFeeds),
+        goatMonthlyMedication: Number(invoiceParamsForm.goatMonthlyMedication),
+        pigMonthlyFeeds: Number(invoiceParamsForm.pigMonthlyFeeds),
+        pigMonthlyMedication: Number(invoiceParamsForm.pigMonthlyMedication),
+        ramMonthlyFeeds: Number(invoiceParamsForm.ramMonthlyFeeds),
+        ramMonthlyMedication: Number(invoiceParamsForm.ramMonthlyMedication)
+      };
+      const updated = await api.updateInvoiceParameters(payload);
+      setInvoiceParamsForm({
+        cattleMonthlyFeeds: String(updated.cattleMonthlyFeeds ?? 0),
+        cattleMonthlyMedication: String(updated.cattleMonthlyMedication ?? 0),
+        goatMonthlyFeeds: String(updated.goatMonthlyFeeds ?? 0),
+        goatMonthlyMedication: String(updated.goatMonthlyMedication ?? 0),
+        pigMonthlyFeeds: String(updated.pigMonthlyFeeds ?? 0),
+        pigMonthlyMedication: String(updated.pigMonthlyMedication ?? 0),
+        ramMonthlyFeeds: String(updated.ramMonthlyFeeds ?? 0),
+        ramMonthlyMedication: String(updated.ramMonthlyMedication ?? 0)
+      });
+      setMessage("Invoice parameters updated.");
+    } catch (err) {
+      setMessage(err.message);
+    }
+  }
+
+  async function onGenerateOwnerInvoice(e) {
+    e.preventDefault();
+    try {
+      const invoice = await api.getMonthlyOwnerInvoice(Number(invoiceOwnerId));
+      setOwnerInvoice(invoice);
+      setMessage("Owner monthly invoice calculated.");
+    } catch (err) {
+      setMessage(err.message);
+    }
+  }
+
+  async function onLoadAllInvoices() {
+    try {
+      const invoices = await api.getMonthlyOwnersInvoices();
+      setAllOwnersInvoices(invoices);
+      setMessage(`Loaded ${invoices.length} owner monthly invoice(s).`);
+    } catch (err) {
+      setMessage(err.message);
+    }
+  }
+
   return (
     <div className="page">
       <header className="hero topbar">
@@ -253,6 +335,8 @@ function AdminPage({ session, onLogout }) {
               ? "Register Owner"
               : adminView === "registerAnimal"
                 ? "Register Animal"
+                : adminView === "invoiceConfig"
+                  ? "Invoice Config & Monthly Invoices"
                 : "Admin Dashboard"}
           </h1>
           <p>{session.username} ({session.role})</p>
@@ -264,6 +348,7 @@ function AdminPage({ session, onLogout }) {
             <>
               <button onClick={() => setAdminView("registerOwner")}>Owner Registration Page</button>
               <button onClick={() => setAdminView("registerAnimal")}>Animal Registration Page</button>
+              <button onClick={() => setAdminView("invoiceConfig")}>Invoice Config Page</button>
             </>
           )}
           <button onClick={onLogout}>Logout</button>
@@ -305,6 +390,79 @@ function AdminPage({ session, onLogout }) {
             <button type="submit">Create Animal</button>
           </form>
         </section>
+      ) : adminView === "invoiceConfig" ? (
+        <>
+          <section className="grid">
+            <form className="card" onSubmit={onSaveInvoiceParams}>
+              <h2>Invoice Parameters</h2>
+              <input type="number" step="0.01" placeholder="Cattle Monthly Feeds" value={invoiceParamsForm.cattleMonthlyFeeds} onChange={(e) => setInvoiceParamsForm({ ...invoiceParamsForm, cattleMonthlyFeeds: e.target.value })} required />
+              <input type="number" step="0.01" placeholder="Cattle Monthly Medication" value={invoiceParamsForm.cattleMonthlyMedication} onChange={(e) => setInvoiceParamsForm({ ...invoiceParamsForm, cattleMonthlyMedication: e.target.value })} required />
+              <input type="number" step="0.01" placeholder="Goat Monthly Feeds" value={invoiceParamsForm.goatMonthlyFeeds} onChange={(e) => setInvoiceParamsForm({ ...invoiceParamsForm, goatMonthlyFeeds: e.target.value })} required />
+              <input type="number" step="0.01" placeholder="Goat Monthly Medication" value={invoiceParamsForm.goatMonthlyMedication} onChange={(e) => setInvoiceParamsForm({ ...invoiceParamsForm, goatMonthlyMedication: e.target.value })} required />
+              <input type="number" step="0.01" placeholder="Pig Monthly Feeds" value={invoiceParamsForm.pigMonthlyFeeds} onChange={(e) => setInvoiceParamsForm({ ...invoiceParamsForm, pigMonthlyFeeds: e.target.value })} required />
+              <input type="number" step="0.01" placeholder="Pig Monthly Medication" value={invoiceParamsForm.pigMonthlyMedication} onChange={(e) => setInvoiceParamsForm({ ...invoiceParamsForm, pigMonthlyMedication: e.target.value })} required />
+              <input type="number" step="0.01" placeholder="Ram Monthly Feeds" value={invoiceParamsForm.ramMonthlyFeeds} onChange={(e) => setInvoiceParamsForm({ ...invoiceParamsForm, ramMonthlyFeeds: e.target.value })} required />
+              <input type="number" step="0.01" placeholder="Ram Monthly Medication" value={invoiceParamsForm.ramMonthlyMedication} onChange={(e) => setInvoiceParamsForm({ ...invoiceParamsForm, ramMonthlyMedication: e.target.value })} required />
+              <button type="submit">Save Parameters</button>
+            </form>
+
+            <form className="card" onSubmit={onGenerateOwnerInvoice}>
+              <h2>Generate Owner Monthly Invoice</h2>
+              <input
+                placeholder="Owner ID"
+                value={invoiceOwnerId}
+                onChange={(e) => setInvoiceOwnerId(e.target.value)}
+                required
+              />
+              <button type="submit">Generate Invoice</button>
+              {ownerInvoice && (
+                <div>
+                  <p>Owner: {ownerInvoice.ownerId} - {ownerInvoice.firstName}</p>
+                  <p>Cattle: {ownerInvoice.cattleCount}</p>
+                  <p>Goats: {ownerInvoice.goatCount}</p>
+                  <p>Rams: {ownerInvoice.ramCount}</p>
+                  <p>Pigs: {ownerInvoice.pigCount}</p>
+                  <p><strong>Total: {Number(ownerInvoice.totalAmount).toFixed(2)}</strong></p>
+                </div>
+              )}
+            </form>
+
+            <div className="card">
+              <h2>All Owners Monthly Invoices</h2>
+              <button type="button" onClick={onLoadAllInvoices}>Load All</button>
+            </div>
+          </section>
+
+          <section className="card full">
+            <h2>Monthly Invoice Summary</h2>
+            <table>
+              <thead>
+                <tr>
+                  <th>Owner ID</th>
+                  <th>Firstname</th>
+                  <th>Cattle</th>
+                  <th>Goats</th>
+                  <th>Rams</th>
+                  <th>Pigs</th>
+                  <th>Total</th>
+                </tr>
+              </thead>
+              <tbody>
+                {allOwnersInvoices.map((inv) => (
+                  <tr key={inv.ownerId}>
+                    <td>{inv.ownerId}</td>
+                    <td>{inv.firstName}</td>
+                    <td>{inv.cattleCount}</td>
+                    <td>{inv.goatCount}</td>
+                    <td>{inv.ramCount}</td>
+                    <td>{inv.pigCount}</td>
+                    <td>{Number(inv.totalAmount).toFixed(2)}</td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </section>
+        </>
       ) : (
         <>
       <section className="grid">

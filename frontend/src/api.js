@@ -144,6 +144,10 @@ export const api = {
     return request(`/owners/search${q ? `?${q}` : ""}`);
   },
   updateOwner: (ownerId, payload) => request(`/owners/${ownerId}`, { method: "PUT", body: JSON.stringify(payload) }),
+  getInvoiceParameters: () => request("/invoice-parameters"),
+  updateInvoiceParameters: (payload) => request("/invoice-parameters", { method: "PUT", body: JSON.stringify(payload) }),
+  getMonthlyOwnerInvoice: (ownerId) => request(`/invoices/monthly/owner/${ownerId}`),
+  getMonthlyOwnersInvoices: () => request("/invoices/monthly/owners"),
   downloadReport: async (type, value) => {
     let path = `/reports/owner/${value}`;
     if (type === "ownerVsAnimal") path = `/reports/owner-vs-animal?ownerId=${value}`;

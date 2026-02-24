@@ -107,6 +107,28 @@ Note:
 - If owner has no username yet, admin must set username and temporary password.
 - When admin sets/edits temporary password, owner is forced to change password at next login.
 
+### 4.8 Configure Invoice Parameters And Generate Monthly Invoices
+1. Open **Invoice Config Page** from Admin view.
+2. Set these parameters:
+- Cattle Monthly Feeds
+- Cattle Monthly Medication
+- Goat Monthly Feeds
+- Goat Monthly Medication
+- Pig Monthly Feeds
+- Pig Monthly Medication
+- Ram Monthly Feeds
+- Ram Monthly Medication
+3. Click **Save Parameters**.
+
+Monthly invoice logic:
+- For each owner, the system counts current unsold animals by type.
+- Per-animal monthly rate = `Monthly Feeds + Monthly Medication` for that type.
+- Owner monthly total = sum of `(rate * number of animals)` across all types.
+
+You can:
+- Generate monthly invoice for one owner by owner ID.
+- Load monthly invoice summary for all owners.
+
 ## 5. Owner User Guide
 
 Owners only manage their own data and animals.
