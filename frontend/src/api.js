@@ -148,25 +148,6 @@ export const api = {
   updateInvoiceParameters: (payload) => request("/invoice-parameters", { method: "PUT", body: JSON.stringify(payload) }),
   getMonthlyOwnerInvoice: (ownerId) => request(`/invoices/monthly/owner/${ownerId}`),
   getMonthlyOwnersInvoices: () => request("/invoices/monthly/owners"),
-  generateAndEmailMonthlyInvoices: (payload) => request("/invoices/monthly/generate-and-email", { method: "POST", body: JSON.stringify(payload || {}) }),
-  markInvoicePaid: (invoiceId) => request(`/invoices/${invoiceId}/mark-paid`, { method: "POST" }),
-  getInvoiceHistory: ({ ownerId, year, month }) => {
-    const params = new URLSearchParams();
-    if (ownerId) params.set("ownerId", ownerId);
-    if (year) params.set("year", year);
-    if (month) params.set("month", month);
-    const q = params.toString();
-    return request(`/invoices/history${q ? `?${q}` : ""}`);
-  },
-  downloadInvoicePdf: (invoiceId) => request(`/invoices/${invoiceId}/pdf`),
-  downloadInvoiceZip: ({ ownerId, year, month }) => {
-    const params = new URLSearchParams();
-    if (ownerId) params.set("ownerId", ownerId);
-    if (year) params.set("year", year);
-    if (month) params.set("month", month);
-    const q = params.toString();
-    return request(`/invoices/history/zip${q ? `?${q}` : ""}`);
-  },
   downloadReport: async (type, value) => {
     let path = `/reports/owner/${value}`;
     if (type === "ownerVsAnimal") path = `/reports/owner-vs-animal?ownerId=${value}`;

@@ -128,11 +128,6 @@ Monthly invoice logic:
 You can:
 - Generate monthly invoice for one owner by owner ID.
 - Load monthly invoice summary for all owners.
-- Generate and email monthly PDF invoices for all owners (owner gets own invoice via registered email).
-- Mark invoice as paid; only unpaid balances are carried into future invoices.
-- View previous generated invoices.
-- Download single invoice PDF.
-- Download filtered invoice PDFs as ZIP.
 
 ## 5. Owner User Guide
 

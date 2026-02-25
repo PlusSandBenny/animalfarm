@@ -194,11 +194,6 @@ Services in compose:
 - `PUT /api/invoice-parameters`
 - `GET /api/invoices/monthly/owner/{ownerId}`
 - `GET /api/invoices/monthly/owners`
-- `POST /api/invoices/monthly/generate-and-email`
-- `POST /api/invoices/{invoiceId}/mark-paid`
-- `GET /api/invoices/history`
-- `GET /api/invoices/{invoiceId}/pdf`
-- `GET /api/invoices/history/zip`
 - `POST /api/animals`
 - `GET /api/animals`
 - `POST /api/animals/transfer`
@@ -215,4 +210,3 @@ Services in compose:
 
 - This version enforces role-based access from authenticated JWT claims (`OWNER` / `ADMIN`).
 - Transfer and sell operations are written to `audit_logs`.
-- Monthly invoice emails use Spring Mail config (`spring.mail.*`).
