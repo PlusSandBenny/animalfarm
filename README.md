@@ -196,6 +196,9 @@ Services in compose:
 - `GET /api/invoices/monthly/owners`
 - `POST /api/invoices/monthly/generate-and-email`
 - `POST /api/invoices/{invoiceId}/mark-paid`
+- `GET /api/invoices/history`
+- `GET /api/invoices/{invoiceId}/pdf`
+- `GET /api/invoices/history/zip`
 - `POST /api/animals`
 - `GET /api/animals`
 - `POST /api/animals/transfer`

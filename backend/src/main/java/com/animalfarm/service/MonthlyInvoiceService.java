@@ -1,6 +1,7 @@
 package com.animalfarm.service;
 
 import com.animalfarm.dto.GeneratedInvoiceSummary;
+import com.animalfarm.dto.InvoiceHistoryResponse;
 import com.animalfarm.dto.MonthlyInvoiceResponse;
 import com.animalfarm.exception.ApiException;
 import com.animalfarm.model.ActorRole;
@@ -14,6 +15,10 @@ import java.math.BigDecimal;
 import java.time.YearMonth;
 import java.time.LocalDateTime;
 import java.util.List;
+import java.util.zip.ZipEntry;
+import java.util.zip.ZipOutputStream;
+import java.io.ByteArrayOutputStream;
+import java.io.IOException;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -24,19 +29,22 @@ public class MonthlyInvoiceService {
     private final InvoiceParameterService invoiceParameterService;
     private final OwnerInvoiceRepository ownerInvoiceRepository;
     private final InvoiceEmailService invoiceEmailService;
+    private final InvoicePdfService invoicePdfService;
 
     public MonthlyInvoiceService(
             AnimalRepository animalRepository,
             OwnerService ownerService,
             InvoiceParameterService invoiceParameterService,
             OwnerInvoiceRepository ownerInvoiceRepository,
-            InvoiceEmailService invoiceEmailService
+            InvoiceEmailService invoiceEmailService,
+            InvoicePdfService invoicePdfService
     ) {
         this.animalRepository = animalRepository;
         this.ownerService = ownerService;
         this.invoiceParameterService = invoiceParameterService;
         this.ownerInvoiceRepository = ownerInvoiceRepository;
         this.invoiceEmailService = invoiceEmailService;
+        this.invoicePdfService = invoicePdfService;
     }
 
     public MonthlyInvoiceResponse generateForOwner(Long ownerId, ActorRole role, Long requesterOwnerId) {
@@ -70,6 +78,54 @@ public class MonthlyInvoiceService {
         OwnerInvoice invoice = ownerInvoiceRepository.findById(invoiceId)
                 .orElseThrow(() -> new ApiException("Invoice not found: " + invoiceId));
         invoice.setPaid(true);
+    }
+
+    public List<InvoiceHistoryResponse> getInvoiceHistory(ActorRole role, Long requesterOwnerId, Long ownerId, Integer year, Integer month) {
+        Long effectiveOwnerId = ownerId;
+        if (role == ActorRole.OWNER) {
+            effectiveOwnerId = requesterOwnerId;
+        }
+
+        List<OwnerInvoice> invoices;
+        if (effectiveOwnerId != null && year != null && month != null) {
+            invoices = ownerInvoiceRepository.findByOwnerIdAndPeriodYearAndPeriodMonthOrderByCreatedAtDesc(effectiveOwnerId, year, month);
+        } else if (effectiveOwnerId != null) {
+            invoices = ownerInvoiceRepository.findByOwnerIdOrderByCreatedAtDesc(effectiveOwnerId);
+        } else if (year != null && month != null) {
+            RoleValidator.requireAdmin(role);
+            invoices = ownerInvoiceRepository.findByPeriodYearAndPeriodMonthOrderByCreatedAtDesc(year, month);
+        } else {
+            RoleValidator.requireAdmin(role);
+            invoices = ownerInvoiceRepository.findAllByOrderByCreatedAtDesc();
+        }
+        return invoices.stream().map(this::toHistory).toList();
+    }
+
+    public byte[] downloadInvoicePdf(Long invoiceId, ActorRole role, Long requesterOwnerId) {
+        OwnerInvoice invoice = ownerInvoiceRepository.findById(invoiceId)
+                .orElseThrow(() -> new ApiException("Invoice not found: " + invoiceId));
+        if (role == ActorRole.OWNER && (requesterOwnerId == null || !requesterOwnerId.equals(invoice.getOwner().getId()))) {
+            throw new ApiException("Owner can only download own invoice.");
+        }
+        return invoicePdfService.buildInvoicePdf(invoice);
+    }
+
+    public byte[] downloadInvoicesZip(ActorRole role, Long requesterOwnerId, Long ownerId, Integer year, Integer month) {
+        List<OwnerInvoice> invoices = selectInvoices(role, requesterOwnerId, ownerId, year, month);
+        try (ByteArrayOutputStream out = new ByteArrayOutputStream();
+             ZipOutputStream zip = new ZipOutputStream(out)) {
+            for (OwnerInvoice invoice : invoices) {
+                String name = "invoice-" + invoice.getId() + "-owner-" + invoice.getOwner().getId()
+                        + "-" + invoice.getPeriodYear() + "-" + String.format("%02d", invoice.getPeriodMonth()) + ".pdf";
+                zip.putNextEntry(new ZipEntry(name));
+                zip.write(invoicePdfService.buildInvoicePdf(invoice));
+                zip.closeEntry();
+            }
+            zip.finish();
+            return out.toByteArray();
+        } catch (IOException e) {
+            throw new RuntimeException("Failed to generate invoice zip", e);
+        }
     }
 
     private GeneratedInvoiceSummary generateSingle(Owner owner, YearMonth ym, InvoiceParameter p) {
@@ -176,5 +232,43 @@ public class MonthlyInvoiceService {
                 invoice.isEmailSent(),
                 invoice.getEmailError()
         );
+    }
+
+    private InvoiceHistoryResponse toHistory(OwnerInvoice invoice) {
+        return new InvoiceHistoryResponse(
+                invoice.getId(),
+                invoice.getOwner().getId(),
+                invoice.getOwner().getFirstName(),
+                invoice.getOwner().getEmail(),
+                invoice.getPeriodYear(),
+                invoice.getPeriodMonth(),
+                invoice.getCurrentCharge(),
+                invoice.getPreviousUnpaidBalance(),
+                invoice.getTotalDue(),
+                invoice.isPaid(),
+                invoice.isEmailSent(),
+                invoice.getEmailError(),
+                invoice.getCreatedAt()
+        );
+    }
+
+    private List<OwnerInvoice> selectInvoices(ActorRole role, Long requesterOwnerId, Long ownerId, Integer year, Integer month) {
+        Long effectiveOwnerId = ownerId;
+        if (role == ActorRole.OWNER) {
+            effectiveOwnerId = requesterOwnerId;
+        }
+
+        if (effectiveOwnerId != null && year != null && month != null) {
+            return ownerInvoiceRepository.findByOwnerIdAndPeriodYearAndPeriodMonthOrderByCreatedAtDesc(effectiveOwnerId, year, month);
+        }
+        if (effectiveOwnerId != null) {
+            return ownerInvoiceRepository.findByOwnerIdOrderByCreatedAtDesc(effectiveOwnerId);
+        }
+        if (year != null && month != null) {
+            RoleValidator.requireAdmin(role);
+            return ownerInvoiceRepository.findByPeriodYearAndPeriodMonthOrderByCreatedAtDesc(year, month);
+        }
+        RoleValidator.requireAdmin(role);
+        return ownerInvoiceRepository.findAllByOrderByCreatedAtDesc();
     }
 }

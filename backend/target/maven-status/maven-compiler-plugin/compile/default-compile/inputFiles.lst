@@ -24,6 +24,7 @@ C:\Users\BenOA\CodexWorkDir\Testproject\animalfarm\backend\src\main\java\com\ani
 C:\Users\BenOA\CodexWorkDir\Testproject\animalfarm\backend\src\main\java\com\animalfarm\dto\AnimalSummary.java
 C:\Users\BenOA\CodexWorkDir\Testproject\animalfarm\backend\src\main\java\com\animalfarm\dto\GeneratedInvoiceSummary.java
 C:\Users\BenOA\CodexWorkDir\Testproject\animalfarm\backend\src\main\java\com\animalfarm\dto\GenerateMonthlyInvoicesRequest.java
+C:\Users\BenOA\CodexWorkDir\Testproject\animalfarm\backend\src\main\java\com\animalfarm\dto\InvoiceHistoryResponse.java
 C:\Users\BenOA\CodexWorkDir\Testproject\animalfarm\backend\src\main\java\com\animalfarm\dto\InvoiceParameterDto.java
 C:\Users\BenOA\CodexWorkDir\Testproject\animalfarm\backend\src\main\java\com\animalfarm\dto\InvoiceParameterUpdateRequest.java
 C:\Users\BenOA\CodexWorkDir\Testproject\animalfarm\backend\src\main\java\com\animalfarm\dto\MonthlyInvoiceResponse.java
@@ -59,6 +60,7 @@ C:\Users\BenOA\CodexWorkDir\Testproject\animalfarm\backend\src\main\java\com\ani
 C:\Users\BenOA\CodexWorkDir\Testproject\animalfarm\backend\src\main\java\com\animalfarm\service\AuditLogService.java
 C:\Users\BenOA\CodexWorkDir\Testproject\animalfarm\backend\src\main\java\com\animalfarm\service\InvoiceEmailService.java
 C:\Users\BenOA\CodexWorkDir\Testproject\animalfarm\backend\src\main\java\com\animalfarm\service\InvoiceParameterService.java
+C:\Users\BenOA\CodexWorkDir\Testproject\animalfarm\backend\src\main\java\com\animalfarm\service\InvoicePdfService.java
 C:\Users\BenOA\CodexWorkDir\Testproject\animalfarm\backend\src\main\java\com\animalfarm\service\MonthlyInvoiceService.java
 C:\Users\BenOA\CodexWorkDir\Testproject\animalfarm\backend\src\main\java\com\animalfarm\service\OwnerService.java
 C:\Users\BenOA\CodexWorkDir\Testproject\animalfarm\backend\src\main\java\com\animalfarm\service\ReportService.java
