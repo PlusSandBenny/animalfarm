@@ -22,6 +22,11 @@ const initialInvoiceParams = {
   ramMonthlyFeeds: "0",
   ramMonthlyMedication: "0"
 };
+const today = new Date();
+const defaultInvoicePeriod = {
+  year: String(today.getFullYear()),
+  month: String(today.getMonth() + 1).padStart(2, "0")
+};
 
 function parseIds(value) {
   return value.split(",").map((x) => Number(x.trim())).filter(Boolean);
@@ -137,6 +142,10 @@ function AdminPage({ session, onLogout }) {
   const [invoiceOwnerId, setInvoiceOwnerId] = useState("");
   const [ownerInvoice, setOwnerInvoice] = useState(null);
   const [allOwnersInvoices, setAllOwnersInvoices] = useState([]);
+  const [generationPeriod, setGenerationPeriod] = useState(defaultInvoicePeriod);
+  const [generatedInvoices, setGeneratedInvoices] = useState([]);
+  const [invoiceHistoryFilters, setInvoiceHistoryFilters] = useState({ ownerId: "", year: "", month: "" });
+  const [invoiceHistory, setInvoiceHistory] = useState([]);
   const [animals, setAnimals] = useState([]);
   const [transferRequests, setTransferRequests] = useState([]);
   const [message, setMessage] = useState("");
@@ -153,17 +162,23 @@ function AdminPage({ session, onLogout }) {
 
   useEffect(() => {
     if (adminView === "invoiceConfig") {
-      api.getInvoiceParameters()
-        .then((p) => setInvoiceParamsForm({
-          cattleMonthlyFeeds: String(p.cattleMonthlyFeeds ?? 0),
-          cattleMonthlyMedication: String(p.cattleMonthlyMedication ?? 0),
-          goatMonthlyFeeds: String(p.goatMonthlyFeeds ?? 0),
-          goatMonthlyMedication: String(p.goatMonthlyMedication ?? 0),
-          pigMonthlyFeeds: String(p.pigMonthlyFeeds ?? 0),
-          pigMonthlyMedication: String(p.pigMonthlyMedication ?? 0),
-          ramMonthlyFeeds: String(p.ramMonthlyFeeds ?? 0),
-          ramMonthlyMedication: String(p.ramMonthlyMedication ?? 0)
-        }))
+      Promise.all([
+        api.getInvoiceParameters(),
+        api.getInvoiceHistory()
+      ])
+        .then(([p, history]) => {
+          setInvoiceParamsForm({
+            cattleMonthlyFeeds: String(p.cattleMonthlyFeeds ?? 0),
+            cattleMonthlyMedication: String(p.cattleMonthlyMedication ?? 0),
+            goatMonthlyFeeds: String(p.goatMonthlyFeeds ?? 0),
+            goatMonthlyMedication: String(p.goatMonthlyMedication ?? 0),
+            pigMonthlyFeeds: String(p.pigMonthlyFeeds ?? 0),
+            pigMonthlyMedication: String(p.pigMonthlyMedication ?? 0),
+            ramMonthlyFeeds: String(p.ramMonthlyFeeds ?? 0),
+            ramMonthlyMedication: String(p.ramMonthlyMedication ?? 0)
+          });
+          setInvoiceHistory(history);
+        })
         .catch((e) => setMessage(e.message));
     }
   }, [adminView]);
@@ -326,6 +341,75 @@ function AdminPage({ session, onLogout }) {
     }
   }
 
+  async function onGenerateAndEmailInvoices(e) {
+    e.preventDefault();
+    try {
+      const payload = {
+        year: Number(generationPeriod.year),
+        month: Number(generationPeriod.month)
+      };
+      const generated = await api.generateAndEmailMonthlyInvoices(payload);
+      setGeneratedInvoices(generated);
+      const history = await api.getInvoiceHistory(payload);
+      setInvoiceHistory(history);
+      setMessage(`Generated ${generated.length} invoice(s) and attempted email delivery.`);
+    } catch (err) {
+      setMessage(err.message);
+    }
+  }
+
+  async function onMarkInvoicePaid(invoiceId) {
+    try {
+      await api.markInvoicePaid(invoiceId);
+      setGeneratedInvoices((prev) => prev.map((inv) => (inv.invoiceId === invoiceId ? { ...inv, paid: true } : inv)));
+      setInvoiceHistory((prev) => prev.map((inv) => (inv.invoiceId === invoiceId ? { ...inv, paid: true } : inv)));
+      setMessage(`Invoice ${invoiceId} marked as paid.`);
+    } catch (err) {
+      setMessage(err.message);
+    }
+  }
+
+  async function onLoadInvoiceHistory(e) {
+    e.preventDefault();
+    try {
+      const filters = {
+        ownerId: invoiceHistoryFilters.ownerId.trim(),
+        year: invoiceHistoryFilters.year.trim(),
+        month: invoiceHistoryFilters.month.trim()
+      };
+      const history = await api.getInvoiceHistory(filters);
+      setInvoiceHistory(history);
+      setMessage(`Loaded ${history.length} historical invoice(s).`);
+    } catch (err) {
+      setMessage(err.message);
+    }
+  }
+
+  async function onDownloadInvoicePdf(invoiceId) {
+    try {
+      const blob = await api.downloadInvoicePdf(invoiceId);
+      downloadBlob(blob, `invoice-${invoiceId}.pdf`);
+    } catch (err) {
+      setMessage(err.message);
+    }
+  }
+
+  async function onDownloadInvoiceZip() {
+    try {
+      const filters = {
+        ownerId: invoiceHistoryFilters.ownerId.trim(),
+        year: invoiceHistoryFilters.year.trim(),
+        month: invoiceHistoryFilters.month.trim()
+      };
+      const blob = await api.downloadInvoiceZip(filters);
+      const year = filters.year || generationPeriod.year;
+      const month = filters.month || generationPeriod.month;
+      downloadBlob(blob, `invoices-${year}-${String(month).padStart(2, "0")}.zip`);
+    } catch (err) {
+      setMessage(err.message);
+    }
+  }
+
   return (
     <div className="page">
       <header className="hero topbar">
@@ -431,6 +515,52 @@ function AdminPage({ session, onLogout }) {
               <h2>All Owners Monthly Invoices</h2>
               <button type="button" onClick={onLoadAllInvoices}>Load All</button>
             </div>
+
+            <form className="card" onSubmit={onGenerateAndEmailInvoices}>
+              <h2>Generate & Email Invoices</h2>
+              <input
+                type="number"
+                placeholder="Year"
+                value={generationPeriod.year}
+                onChange={(e) => setGenerationPeriod({ ...generationPeriod, year: e.target.value })}
+                required
+              />
+              <input
+                type="number"
+                min="1"
+                max="12"
+                placeholder="Month (1-12)"
+                value={generationPeriod.month}
+                onChange={(e) => setGenerationPeriod({ ...generationPeriod, month: e.target.value })}
+                required
+              />
+              <button type="submit">Generate and Send</button>
+            </form>
+
+            <form className="card" onSubmit={onLoadInvoiceHistory}>
+              <h2>Previous Invoices</h2>
+              <input
+                placeholder="Owner ID (optional)"
+                value={invoiceHistoryFilters.ownerId}
+                onChange={(e) => setInvoiceHistoryFilters({ ...invoiceHistoryFilters, ownerId: e.target.value })}
+              />
+              <input
+                type="number"
+                placeholder="Year (optional)"
+                value={invoiceHistoryFilters.year}
+                onChange={(e) => setInvoiceHistoryFilters({ ...invoiceHistoryFilters, year: e.target.value })}
+              />
+              <input
+                type="number"
+                min="1"
+                max="12"
+                placeholder="Month (optional)"
+                value={invoiceHistoryFilters.month}
+                onChange={(e) => setInvoiceHistoryFilters({ ...invoiceHistoryFilters, month: e.target.value })}
+              />
+              <button type="submit">Load Previous</button>
+              <button type="button" onClick={onDownloadInvoiceZip}>Download ZIP</button>
+            </form>
           </section>
 
           <section className="card full">
@@ -457,6 +587,83 @@ function AdminPage({ session, onLogout }) {
                     <td>{inv.ramCount}</td>
                     <td>{inv.pigCount}</td>
                     <td>{Number(inv.totalAmount).toFixed(2)}</td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </section>
+
+          <section className="card full">
+            <h2>Generated Invoice Status</h2>
+            <table>
+              <thead>
+                <tr>
+                  <th>Invoice ID</th>
+                  <th>Owner ID</th>
+                  <th>Owner</th>
+                  <th>Period</th>
+                  <th>Current</th>
+                  <th>Previous</th>
+                  <th>Total</th>
+                  <th>Paid</th>
+                  <th>Email</th>
+                  <th>Actions</th>
+                </tr>
+              </thead>
+              <tbody>
+                {generatedInvoices.map((inv) => (
+                  <tr key={inv.invoiceId}>
+                    <td>{inv.invoiceId}</td>
+                    <td>{inv.ownerId}</td>
+                    <td>{inv.ownerFirstName}</td>
+                    <td>{inv.periodYear}-{String(inv.periodMonth).padStart(2, "0")}</td>
+                    <td>{Number(inv.currentCharge).toFixed(2)}</td>
+                    <td>{Number(inv.previousUnpaidBalance).toFixed(2)}</td>
+                    <td>{Number(inv.totalDue).toFixed(2)}</td>
+                    <td>{String(inv.paid)}</td>
+                    <td>{inv.emailSent ? "Sent" : `Failed${inv.emailError ? `: ${inv.emailError}` : ""}`}</td>
+                    <td>
+                      <button type="button" onClick={() => onDownloadInvoicePdf(inv.invoiceId)}>Download PDF</button>
+                      {!inv.paid && (
+                        <button type="button" onClick={() => onMarkInvoicePaid(inv.invoiceId)}>Mark Paid</button>
+                      )}
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </section>
+
+          <section className="card full">
+            <h2>Invoice History</h2>
+            <table>
+              <thead>
+                <tr>
+                  <th>Invoice ID</th>
+                  <th>Owner ID</th>
+                  <th>Owner</th>
+                  <th>Period</th>
+                  <th>Total Due</th>
+                  <th>Paid</th>
+                  <th>Email</th>
+                  <th>Created At</th>
+                  <th>Actions</th>
+                </tr>
+              </thead>
+              <tbody>
+                {invoiceHistory.map((inv) => (
+                  <tr key={inv.invoiceId}>
+                    <td>{inv.invoiceId}</td>
+                    <td>{inv.ownerId}</td>
+                    <td>{inv.ownerFirstName}</td>
+                    <td>{inv.periodYear}-{String(inv.periodMonth).padStart(2, "0")}</td>
+                    <td>{Number(inv.totalDue).toFixed(2)}</td>
+                    <td>{String(inv.paid)}</td>
+                    <td>{inv.emailSent ? "Sent" : "Failed"}</td>
+                    <td>{inv.createdAt}</td>
+                    <td>
+                      <button type="button" onClick={() => onDownloadInvoicePdf(inv.invoiceId)}>Download PDF</button>
+                    </td>
                   </tr>
                 ))}
               </tbody>
