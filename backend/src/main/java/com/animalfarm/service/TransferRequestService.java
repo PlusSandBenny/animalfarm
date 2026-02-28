@@ -10,6 +10,7 @@ import com.animalfarm.model.TransferRequest;
 import com.animalfarm.model.TransferStatus;
 import com.animalfarm.repository.TransferRequestRepository;
 import java.util.List;
+import java.util.UUID;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -29,7 +30,7 @@ public class TransferRequestService {
         this.animalService = animalService;
     }
 
-    public TransferRequestSummary create(TransferRequestCreate request, ActorRole role, Long actorOwnerId) {
+    public TransferRequestSummary create(TransferRequestCreate request, ActorRole role, UUID actorOwnerId) {
         if (role != ActorRole.OWNER && role != ActorRole.ADMIN) {
             throw new ApiException("Only OWNER or ADMIN can create transfer requests.");
         }
@@ -63,7 +64,7 @@ public class TransferRequestService {
         }
 
         animalService.transferAnimals(new TransferAnimalsRequest(
-                tr.getToOwner().getId(),
+                tr.getToOwner().getOwnerId(),
                 tr.getAnimalIds()
         ), actor);
         tr.setStatus(TransferStatus.APPROVED);

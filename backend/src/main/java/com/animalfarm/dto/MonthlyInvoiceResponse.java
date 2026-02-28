@@ -1,9 +1,10 @@
 package com.animalfarm.dto;
 
 import java.math.BigDecimal;
+import java.util.UUID;
 
 public record MonthlyInvoiceResponse(
-        Long ownerId,
+        UUID ownerId,
         String firstName,
         long cattleCount,
         long goatCount,

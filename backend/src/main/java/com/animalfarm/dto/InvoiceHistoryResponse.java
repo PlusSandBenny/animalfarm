@@ -2,10 +2,11 @@ package com.animalfarm.dto;
 
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
+import java.util.UUID;
 
 public record InvoiceHistoryResponse(
         Long invoiceId,
-        Long ownerId,
+        UUID ownerId,
         String ownerFirstName,
         String ownerEmail,
         Integer periodYear,

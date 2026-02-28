@@ -11,6 +11,7 @@ import java.nio.charset.StandardCharsets;
 import java.security.MessageDigest;
 import java.time.LocalDateTime;
 import java.util.HexFormat;
+import java.util.UUID;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -82,8 +83,8 @@ public class SessionAuthService {
         Long userId = Long.valueOf(claims.getSubject());
         String username = claims.get("username", String.class);
         String role = claims.get("role", String.class);
-        Number ownerIdNum = claims.get("ownerId", Number.class);
-        Long ownerId = ownerIdNum != null ? ownerIdNum.longValue() : null;
+        String ownerIdValue = claims.get("ownerId", String.class);
+        UUID ownerId = ownerIdValue != null && !ownerIdValue.isBlank() ? UUID.fromString(ownerIdValue) : null;
         Boolean mustChangePassword = claims.get("mustChangePassword", Boolean.class);
         return new AuthSession(
                 userId,
@@ -120,7 +121,7 @@ public class SessionAuthService {
                 user.getId(),
                 user.getUsername(),
                 user.getRole(),
-                user.getOwner() != null ? user.getOwner().getId() : null,
+                user.getOwner() != null ? user.getOwner().getOwnerId() : null,
                 user.isForcePasswordReset()
         );
         String refreshToken = jwtTokenService.generateRefreshToken(user.getId());
@@ -135,7 +136,7 @@ public class SessionAuthService {
                 refreshToken,
                 user.getUsername(),
                 user.getRole(),
-                user.getOwner() != null ? user.getOwner().getId() : null,
+                user.getOwner() != null ? user.getOwner().getOwnerId() : null,
                 user.isForcePasswordReset(),
                 jwtTokenService.getAccessTokenMinutes() * 60
         );

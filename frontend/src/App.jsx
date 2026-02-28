@@ -3,12 +3,11 @@ import { api, authApi } from "./api";
 
 const initialOwner = { firstName: "", lastName: "", email: "", phoneNumber: "", address: "", username: "", password: "" };
 const initialAnimal = {
-  animalId: "",
   color: "",
   dateOfBirth: "",
   breed: "",
   type: "CATTLE",
-  image: "",
+  imageFile: null,
   parentId: "",
   ownerId: ""
 };
@@ -29,7 +28,7 @@ const defaultInvoicePeriod = {
 };
 
 function parseIds(value) {
-  return value.split(",").map((x) => Number(x.trim())).filter(Boolean);
+  return value.split(",").map((x) => x.trim()).filter(Boolean);
 }
 
 function downloadBlob(blob, filename) {
@@ -197,11 +196,7 @@ function AdminPage({ session, onLogout }) {
   async function onCreateAnimal(e) {
     e.preventDefault();
     try {
-      await api.registerAnimal({
-        ...animalForm,
-        ownerId: Number(animalForm.ownerId),
-        parentId: animalForm.parentId ? Number(animalForm.parentId) : null
-      });
+      await api.registerAnimal(animalForm);
       setAnimalForm(initialAnimal);
       await refresh();
       setMessage("Animal registered.");
@@ -214,7 +209,7 @@ function AdminPage({ session, onLogout }) {
     e.preventDefault();
     try {
       await api.transferAnimals({
-        toOwnerId: Number(transferForm.toOwnerId),
+        toOwnerId: transferForm.toOwnerId.trim(),
         animalIds: parseIds(transferForm.animalIds)
       });
       setTransferForm({ toOwnerId: "", animalIds: "" });
@@ -246,6 +241,7 @@ function AdminPage({ session, onLogout }) {
   function startEditOwner(owner) {
     setEditingOwner({
       id: owner.id,
+      ownerId: owner.ownerId,
       username: owner.username || "",
       hasCredentials: owner.credentialsCreated,
       firstName: owner.firstName,
@@ -261,7 +257,7 @@ function AdminPage({ session, onLogout }) {
     e.preventDefault();
     if (!editingOwner) return;
     try {
-      await api.updateOwner(editingOwner.id, {
+      await api.updateOwner(editingOwner.ownerId, {
         firstName: editingOwner.firstName,
         lastName: editingOwner.lastName,
         email: editingOwner.email,
@@ -323,7 +319,7 @@ function AdminPage({ session, onLogout }) {
   async function onGenerateOwnerInvoice(e) {
     e.preventDefault();
     try {
-      const invoice = await api.getMonthlyOwnerInvoice(Number(invoiceOwnerId));
+      const invoice = await api.getMonthlyOwnerInvoice(invoiceOwnerId.trim());
       setOwnerInvoice(invoice);
       setMessage("Owner monthly invoice calculated.");
     } catch (err) {
@@ -458,7 +454,6 @@ function AdminPage({ session, onLogout }) {
         <section className="grid">
           <form className="card" onSubmit={onCreateAnimal}>
             <h2>Register Animal</h2>
-            <input placeholder="Animal ID" value={animalForm.animalId} onChange={(e) => setAnimalForm({ ...animalForm, animalId: e.target.value })} required />
             <input placeholder="Color" value={animalForm.color} onChange={(e) => setAnimalForm({ ...animalForm, color: e.target.value })} required />
             <input type="date" value={animalForm.dateOfBirth} onChange={(e) => setAnimalForm({ ...animalForm, dateOfBirth: e.target.value })} required />
             <input placeholder="Breed" value={animalForm.breed} onChange={(e) => setAnimalForm({ ...animalForm, breed: e.target.value })} required />
@@ -468,9 +463,9 @@ function AdminPage({ session, onLogout }) {
               <option value="RAM">RAM</option>
               <option value="PIG">PIG</option>
             </select>
-            <input placeholder="Image URL" value={animalForm.image} onChange={(e) => setAnimalForm({ ...animalForm, image: e.target.value })} />
-            <input placeholder="Parent Animal DB Id (optional)" value={animalForm.parentId} onChange={(e) => setAnimalForm({ ...animalForm, parentId: e.target.value })} />
-            <input placeholder="Owner ID" value={animalForm.ownerId} onChange={(e) => setAnimalForm({ ...animalForm, ownerId: e.target.value })} required />
+            <input type="file" accept="image/*" onChange={(e) => setAnimalForm({ ...animalForm, imageFile: e.target.files?.[0] || null })} />
+            <input placeholder="Parent Animal UUID (optional)" value={animalForm.parentId} onChange={(e) => setAnimalForm({ ...animalForm, parentId: e.target.value })} />
+            <input placeholder="Owner UUID" value={animalForm.ownerId} onChange={(e) => setAnimalForm({ ...animalForm, ownerId: e.target.value })} required />
             <button type="submit">Create Animal</button>
           </form>
         </section>
@@ -676,8 +671,8 @@ function AdminPage({ session, onLogout }) {
 
         <form className="card" onSubmit={onTransfer}>
           <h2>Transfer Animals</h2>
-          <input placeholder="To Owner ID" value={transferForm.toOwnerId} onChange={(e) => setTransferForm({ ...transferForm, toOwnerId: e.target.value })} required />
-          <input placeholder="Animal DB IDs (comma-separated)" value={transferForm.animalIds} onChange={(e) => setTransferForm({ ...transferForm, animalIds: e.target.value })} required />
+          <input placeholder="To Owner UUID" value={transferForm.toOwnerId} onChange={(e) => setTransferForm({ ...transferForm, toOwnerId: e.target.value })} required />
+          <input placeholder="Animal UUIDs (comma-separated)" value={transferForm.animalIds} onChange={(e) => setTransferForm({ ...transferForm, animalIds: e.target.value })} required />
           <button type="submit">Transfer</button>
         </form>
 
@@ -685,17 +680,17 @@ function AdminPage({ session, onLogout }) {
           <h2>Admin Reports</h2>
           <button type="button" onClick={() => onReport("ownersList", "", "owners-list.pdf")}>Owners List</button>
           <button type="button" onClick={() => onReport("ownersAnimalTypeCounts", "", "owners-animal-type-counts.pdf")}>Owners Animal Counts</button>
-          <input placeholder="Owner ID" value={reportForm.ownerId} onChange={(e) => setReportForm({ ...reportForm, ownerId: e.target.value })} />
+          <input placeholder="Owner UUID" value={reportForm.ownerId} onChange={(e) => setReportForm({ ...reportForm, ownerId: e.target.value })} />
           <button type="button" onClick={() => onReport("ownerVsAnimal", reportForm.ownerId, `owner-vs-animal-${reportForm.ownerId}.pdf`)}>Owner vs Animal</button>
           <button type="button" onClick={() => onReport("owner", reportForm.ownerId, `owner-animal-${reportForm.ownerId}.pdf`)}>Owner Animal</button>
-          <input placeholder="Parent Animal DB ID" value={reportForm.parentId} onChange={(e) => setReportForm({ ...reportForm, parentId: e.target.value })} />
+          <input placeholder="Parent Animal UUID" value={reportForm.parentId} onChange={(e) => setReportForm({ ...reportForm, parentId: e.target.value })} />
           <button type="button" onClick={() => onReport("parentVsAnimal", reportForm.parentId, `parent-vs-animal-${reportForm.parentId}.pdf`)}>Parent vs Animal</button>
         </div>
 
         <form className="card" onSubmit={onSearchOwners}>
           <h2>Search Owners</h2>
           <input
-            placeholder="Owner ID"
+            placeholder="Owner UUID"
             value={ownerSearch.ownerId}
             onChange={(e) => setOwnerSearch({ ...ownerSearch, ownerId: e.target.value })}
           />
@@ -712,13 +707,13 @@ function AdminPage({ session, onLogout }) {
         <h2>Animals</h2>
         <table>
           <thead>
-            <tr><th>DB ID</th><th>Animal ID</th><th>Type</th><th>Owner ID</th><th>Sold</th><th>Action</th></tr>
+            <tr><th>DB ID</th><th>Animal UUID</th><th>Type</th><th>Owner UUID</th><th>Sold</th><th>Action</th></tr>
           </thead>
           <tbody>
             {animals.map((a) => (
               <tr key={a.id}>
                 <td>{a.id}</td><td>{a.animalId}</td><td>{a.type}</td><td>{a.ownerId}</td><td>{String(a.sold)}</td>
-                <td><button onClick={() => api.sellAnimal(a.id).then(refresh).catch((e) => setMessage(e.message))}>Sell</button></td>
+                <td><button onClick={() => api.sellAnimal(a.animalId).then(refresh).catch((e) => setMessage(e.message))}>Sell</button></td>
               </tr>
             ))}
           </tbody>
@@ -729,12 +724,13 @@ function AdminPage({ session, onLogout }) {
         <h2>Owner Search Results</h2>
         <table>
           <thead>
-            <tr><th>ID</th><th>Username</th><th>Name</th><th>Email</th><th>Phone</th><th>Action</th></tr>
+            <tr><th>DB ID</th><th>Owner UUID</th><th>Username</th><th>Name</th><th>Email</th><th>Phone</th><th>Action</th></tr>
           </thead>
           <tbody>
             {ownerResults.map((o) => (
               <tr key={o.id}>
                 <td>{o.id}</td>
+                <td>{o.ownerId}</td>
                 <td>{o.username || "Not set"}</td>
                 <td>{o.firstName} {o.lastName}</td>
                 <td>{o.email}</td>
@@ -751,6 +747,7 @@ function AdminPage({ session, onLogout }) {
           <h2>Edit Owner</h2>
           <form className="grid" onSubmit={onSaveOwner}>
             <input value={editingOwner.id} readOnly />
+            <input value={editingOwner.ownerId} readOnly />
             {editingOwner.hasCredentials ? (
               <input value={editingOwner.username} readOnly />
             ) : (
@@ -824,7 +821,7 @@ function OwnerPage({ session, onLogout }) {
     e.preventDefault();
     try {
       await api.transferAnimals({
-        toOwnerId: Number(transferForm.toOwnerId),
+        toOwnerId: transferForm.toOwnerId.trim(),
         animalIds: parseIds(transferForm.animalIds)
       });
       setTransferForm({ toOwnerId: "", animalIds: "" });
@@ -840,7 +837,7 @@ function OwnerPage({ session, onLogout }) {
     try {
       await api.createTransferRequest({
         fromOwnerId: ownerId,
-        toOwnerId: Number(requestForm.toOwnerId),
+        toOwnerId: requestForm.toOwnerId.trim(),
         animalIds: parseIds(requestForm.animalIds),
         ownerEmailMessage: requestForm.ownerEmailMessage
       });
@@ -874,16 +871,16 @@ function OwnerPage({ session, onLogout }) {
       <section className="grid">
         <form className="card" onSubmit={onTransfer}>
           <h2>Transfer Your Animals</h2>
-          <input placeholder="To Owner ID" value={transferForm.toOwnerId} onChange={(e) => setTransferForm({ ...transferForm, toOwnerId: e.target.value })} required />
-          <input placeholder="Animal DB IDs (comma-separated)" value={transferForm.animalIds} onChange={(e) => setTransferForm({ ...transferForm, animalIds: e.target.value })} required />
+          <input placeholder="To Owner UUID" value={transferForm.toOwnerId} onChange={(e) => setTransferForm({ ...transferForm, toOwnerId: e.target.value })} required />
+          <input placeholder="Animal UUIDs (comma-separated)" value={transferForm.animalIds} onChange={(e) => setTransferForm({ ...transferForm, animalIds: e.target.value })} required />
           <button type="submit">Transfer</button>
         </form>
 
         <form className="card" onSubmit={onTransferRequest}>
           <h2>Email Request to Admin</h2>
           <input value={ownerId || ""} readOnly />
-          <input placeholder="To Owner ID" value={requestForm.toOwnerId} onChange={(e) => setRequestForm({ ...requestForm, toOwnerId: e.target.value })} required />
-          <input placeholder="Animal DB IDs (comma-separated)" value={requestForm.animalIds} onChange={(e) => setRequestForm({ ...requestForm, animalIds: e.target.value })} required />
+          <input placeholder="To Owner UUID" value={requestForm.toOwnerId} onChange={(e) => setRequestForm({ ...requestForm, toOwnerId: e.target.value })} required />
+          <input placeholder="Animal UUIDs (comma-separated)" value={requestForm.animalIds} onChange={(e) => setRequestForm({ ...requestForm, animalIds: e.target.value })} required />
           <textarea placeholder="Message to administrator" value={requestForm.ownerEmailMessage} onChange={(e) => setRequestForm({ ...requestForm, ownerEmailMessage: e.target.value })} required />
           <button type="submit">Send Request</button>
         </form>
@@ -898,7 +895,7 @@ function OwnerPage({ session, onLogout }) {
         <h2>Your Animals</h2>
         <table>
           <thead>
-            <tr><th>DB ID</th><th>Animal ID</th><th>Type</th><th>Breed</th><th>Sold</th></tr>
+            <tr><th>DB ID</th><th>Animal UUID</th><th>Type</th><th>Breed</th><th>Sold</th></tr>
           </thead>
           <tbody>
             {animals.map((a) => (

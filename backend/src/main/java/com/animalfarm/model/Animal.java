@@ -9,9 +9,14 @@ import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
 import jakarta.persistence.JoinColumn;
+import jakarta.persistence.Lob;
 import jakarta.persistence.ManyToOne;
+import jakarta.persistence.PrePersist;
 import jakarta.persistence.Table;
 import java.time.LocalDate;
+import java.util.UUID;
+import org.hibernate.annotations.JdbcTypeCode;
+import org.hibernate.type.SqlTypes;
 
 @Entity
 @Table(name = "animals")
@@ -20,8 +25,9 @@ public class Animal {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    @Column(unique = true, nullable = false)
-    private String animalId;
+    @Column(unique = true, nullable = false, updatable = false, length = 36)
+    @JdbcTypeCode(SqlTypes.CHAR)
+    private UUID animalId;
 
     @Column(nullable = false)
     private String color;
@@ -36,9 +42,12 @@ public class Animal {
     @Column(nullable = false)
     private AnimalType type;
 
+    @Lob
     private String image;
 
-    private Long parentId;
+    @Column(length = 36)
+    @JdbcTypeCode(SqlTypes.CHAR)
+    private UUID parentId;
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "owner_id", nullable = false)
@@ -51,11 +60,11 @@ public class Animal {
         return id;
     }
 
-    public String getAnimalId() {
+    public UUID getAnimalId() {
         return animalId;
     }
 
-    public void setAnimalId(String animalId) {
+    public void setAnimalId(UUID animalId) {
         this.animalId = animalId;
     }
 
@@ -99,11 +108,11 @@ public class Animal {
         this.image = image;
     }
 
-    public Long getParentId() {
+    public UUID getParentId() {
         return parentId;
     }
 
-    public void setParentId(Long parentId) {
+    public void setParentId(UUID parentId) {
         this.parentId = parentId;
     }
 
@@ -121,5 +130,12 @@ public class Animal {
 
     public void setSold(boolean sold) {
         this.sold = sold;
+    }
+
+    @PrePersist
+    void onCreate() {
+        if (animalId == null) {
+            animalId = UUID.randomUUID();
+        }
     }
 }

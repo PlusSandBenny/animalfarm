@@ -1,13 +1,14 @@
 package com.animalfarm.auth;
 
 import com.animalfarm.model.ActorRole;
+import java.util.UUID;
 
 public record LoginResponse(
         String accessToken,
         String refreshToken,
         String username,
         ActorRole role,
-        Long ownerId,
+        UUID ownerId,
         boolean mustChangePassword,
         long accessTokenExpiresInSeconds
 ) {

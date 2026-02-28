@@ -128,7 +128,17 @@ export const authApi = {
 export const api = {
   getAnimals: () => request("/animals"),
   registerOwner: (payload) => request("/owners", { method: "POST", body: JSON.stringify(payload) }),
-  registerAnimal: (payload) => request("/animals", { method: "POST", body: JSON.stringify(payload) }),
+  registerAnimal: (payload) => {
+    const form = new FormData();
+    form.append("color", payload.color);
+    form.append("dateOfBirth", payload.dateOfBirth);
+    form.append("breed", payload.breed);
+    form.append("type", payload.type);
+    form.append("ownerId", payload.ownerId);
+    if (payload.parentId) form.append("parentId", payload.parentId);
+    if (payload.imageFile) form.append("image", payload.imageFile);
+    return request("/animals", { method: "POST", body: form });
+  },
   transferAnimals: (payload) => request("/animals/transfer", { method: "POST", body: JSON.stringify(payload) }),
   sellAnimal: (animalId) => request(`/animals/${animalId}/sell`, { method: "POST" }),
   createTransferRequest: (payload) => request("/transfer-requests", { method: "POST", body: JSON.stringify(payload) }),

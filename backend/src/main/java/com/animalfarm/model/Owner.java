@@ -5,9 +5,13 @@ import jakarta.persistence.Entity;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
+import jakarta.persistence.PrePersist;
 import jakarta.persistence.Table;
 import jakarta.validation.constraints.Email;
 import jakarta.validation.constraints.NotBlank;
+import java.util.UUID;
+import org.hibernate.annotations.JdbcTypeCode;
+import org.hibernate.type.SqlTypes;
 
 @Entity
 @Table(name = "owners")
@@ -15,6 +19,10 @@ public class Owner {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
+
+    @Column(unique = true, nullable = false, updatable = false, length = 36)
+    @JdbcTypeCode(SqlTypes.CHAR)
+    private UUID ownerId;
 
     @NotBlank
     private String firstName;
@@ -34,6 +42,10 @@ public class Owner {
 
     public Long getId() {
         return id;
+    }
+
+    public UUID getOwnerId() {
+        return ownerId;
     }
 
     public String getFirstName() {
@@ -74,5 +86,12 @@ public class Owner {
 
     public void setAddress(String address) {
         this.address = address;
+    }
+
+    @PrePersist
+    void onCreate() {
+        if (ownerId == null) {
+            ownerId = UUID.randomUUID();
+        }
     }
 }

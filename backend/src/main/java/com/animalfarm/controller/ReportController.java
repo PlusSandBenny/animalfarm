@@ -15,6 +15,7 @@ import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
+import java.util.UUID;
 
 @RestController
 @RequestMapping("/api/reports")
@@ -26,7 +27,7 @@ public class ReportController {
     }
 
     @GetMapping("/owner-vs-animal")
-    public ResponseEntity<byte[]> ownerVsAnimal(@RequestParam Long ownerId, HttpServletRequest httpRequest) {
+    public ResponseEntity<byte[]> ownerVsAnimal(@RequestParam UUID ownerId, HttpServletRequest httpRequest) {
         AuthSession session = AuthContext.require(httpRequest);
         if (session.role() != ActorRole.ADMIN) {
             throw new ApiException("Only admin can generate this report.");
@@ -35,7 +36,7 @@ public class ReportController {
     }
 
     @GetMapping("/parent-vs-animal")
-    public ResponseEntity<byte[]> parentVsAnimal(@RequestParam Long parentId, HttpServletRequest httpRequest) {
+    public ResponseEntity<byte[]> parentVsAnimal(@RequestParam UUID parentId, HttpServletRequest httpRequest) {
         AuthSession session = AuthContext.require(httpRequest);
         if (session.role() != ActorRole.ADMIN) {
             throw new ApiException("Only admin can generate this report.");
@@ -62,7 +63,7 @@ public class ReportController {
     }
 
     @GetMapping("/owner/{ownerId}")
-    public ResponseEntity<byte[]> ownerReport(@PathVariable Long ownerId, HttpServletRequest httpRequest) {
+    public ResponseEntity<byte[]> ownerReport(@PathVariable UUID ownerId, HttpServletRequest httpRequest) {
         AuthSession session = AuthContext.require(httpRequest);
         if (session.role() == ActorRole.OWNER && (session.ownerId() == null || !session.ownerId().equals(ownerId))) {
             throw new ApiException("Owner can only generate own report.");

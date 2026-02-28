@@ -17,6 +17,7 @@ import java.math.BigDecimal;
 import java.time.LocalDateTime;
 import java.time.YearMonth;
 import java.util.List;
+import java.util.UUID;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipOutputStream;
 import org.springframework.stereotype.Service;
@@ -47,7 +48,7 @@ public class MonthlyInvoiceService {
         this.invoicePdfService = invoicePdfService;
     }
 
-    public MonthlyInvoiceResponse generateForOwner(Long ownerId, ActorRole role, Long requesterOwnerId) {
+    public MonthlyInvoiceResponse generateForOwner(UUID ownerId, ActorRole role, UUID requesterOwnerId) {
         if (role == ActorRole.OWNER && (requesterOwnerId == null || !requesterOwnerId.equals(ownerId))) {
             throw new ApiException("Owner can only generate own monthly invoice.");
         }
@@ -78,26 +79,26 @@ public class MonthlyInvoiceService {
         invoice.setPaid(true);
     }
 
-    public List<InvoiceHistoryResponse> getInvoiceHistory(ActorRole role, Long requesterOwnerId, Long ownerId, Integer year, Integer month) {
+    public List<InvoiceHistoryResponse> getInvoiceHistory(ActorRole role, UUID requesterOwnerId, UUID ownerId, Integer year, Integer month) {
         List<OwnerInvoice> invoices = selectInvoices(role, requesterOwnerId, ownerId, year, month);
         return invoices.stream().map(this::toHistory).toList();
     }
 
-    public byte[] downloadInvoicePdf(Long invoiceId, ActorRole role, Long requesterOwnerId) {
+    public byte[] downloadInvoicePdf(Long invoiceId, ActorRole role, UUID requesterOwnerId) {
         OwnerInvoice invoice = ownerInvoiceRepository.findById(invoiceId)
                 .orElseThrow(() -> new ApiException("Invoice not found: " + invoiceId));
-        if (role == ActorRole.OWNER && (requesterOwnerId == null || !requesterOwnerId.equals(invoice.getOwner().getId()))) {
+        if (role == ActorRole.OWNER && (requesterOwnerId == null || !requesterOwnerId.equals(invoice.getOwner().getOwnerId()))) {
             throw new ApiException("Owner can only download own invoice.");
         }
         return invoicePdfService.buildInvoicePdf(invoice);
     }
 
-    public byte[] downloadInvoicesZip(ActorRole role, Long requesterOwnerId, Long ownerId, Integer year, Integer month) {
+    public byte[] downloadInvoicesZip(ActorRole role, UUID requesterOwnerId, UUID ownerId, Integer year, Integer month) {
         List<OwnerInvoice> invoices = selectInvoices(role, requesterOwnerId, ownerId, year, month);
         try (ByteArrayOutputStream out = new ByteArrayOutputStream();
              ZipOutputStream zip = new ZipOutputStream(out)) {
             for (OwnerInvoice invoice : invoices) {
-                String name = "invoice-" + invoice.getId() + "-owner-" + invoice.getOwner().getId()
+                String name = "invoice-" + invoice.getId() + "-owner-" + invoice.getOwner().getOwnerId()
                         + "-" + invoice.getPeriodYear() + "-" + String.format("%02d", invoice.getPeriodMonth()) + ".pdf";
                 zip.putNextEntry(new ZipEntry(name));
                 zip.write(invoicePdfService.buildInvoicePdf(invoice));
@@ -187,13 +188,13 @@ public class MonthlyInvoiceService {
                 .add(ramRate.multiply(BigDecimal.valueOf(rams)))
                 .add(pigRate.multiply(BigDecimal.valueOf(pigs)));
 
-        return new MonthlyInvoiceResponse(owner.getId(), owner.getFirstName(), cattle, goats, rams, pigs, total);
+        return new MonthlyInvoiceResponse(owner.getOwnerId(), owner.getFirstName(), cattle, goats, rams, pigs, total);
     }
 
     private GeneratedInvoiceSummary toSummary(OwnerInvoice invoice) {
         return new GeneratedInvoiceSummary(
                 invoice.getId(),
-                invoice.getOwner().getId(),
+                invoice.getOwner().getOwnerId(),
                 invoice.getOwner().getFirstName(),
                 invoice.getOwner().getEmail(),
                 invoice.getPeriodYear(),
@@ -210,7 +211,7 @@ public class MonthlyInvoiceService {
     private InvoiceHistoryResponse toHistory(OwnerInvoice invoice) {
         return new InvoiceHistoryResponse(
                 invoice.getId(),
-                invoice.getOwner().getId(),
+                invoice.getOwner().getOwnerId(),
                 invoice.getOwner().getFirstName(),
                 invoice.getOwner().getEmail(),
                 invoice.getPeriodYear(),
@@ -225,14 +226,14 @@ public class MonthlyInvoiceService {
         );
     }
 
-    private List<OwnerInvoice> selectInvoices(ActorRole role, Long requesterOwnerId, Long ownerId, Integer year, Integer month) {
-        Long effectiveOwnerId = role == ActorRole.OWNER ? requesterOwnerId : ownerId;
+    private List<OwnerInvoice> selectInvoices(ActorRole role, UUID requesterOwnerId, UUID ownerId, Integer year, Integer month) {
+        UUID effectiveOwnerId = role == ActorRole.OWNER ? requesterOwnerId : ownerId;
 
         if (effectiveOwnerId != null && year != null && month != null) {
-            return ownerInvoiceRepository.findByOwnerIdAndPeriodYearAndPeriodMonthOrderByCreatedAtDesc(effectiveOwnerId, year, month);
+            return ownerInvoiceRepository.findByOwnerOwnerIdAndPeriodYearAndPeriodMonthOrderByCreatedAtDesc(effectiveOwnerId, year, month);
         }
         if (effectiveOwnerId != null) {
-            return ownerInvoiceRepository.findByOwnerIdOrderByCreatedAtDesc(effectiveOwnerId);
+            return ownerInvoiceRepository.findByOwnerOwnerIdOrderByCreatedAtDesc(effectiveOwnerId);
         }
         if (year != null && month != null) {
             RoleValidator.requireAdmin(role);

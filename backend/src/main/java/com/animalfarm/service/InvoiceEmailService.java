@@ -38,7 +38,7 @@ public class InvoiceEmailService {
                             + "Regards,\nAnimal Farm Admin"
             );
             helper.addAttachment(
-                    "invoice-" + invoice.getOwner().getId() + "-" + invoice.getPeriodYear() + "-" + invoice.getPeriodMonth() + ".pdf",
+                    "invoice-" + invoice.getOwner().getOwnerId() + "-" + invoice.getPeriodYear() + "-" + invoice.getPeriodMonth() + ".pdf",
                     new ByteArrayResource(pdf)
             );
             javaMailSender.send(message);

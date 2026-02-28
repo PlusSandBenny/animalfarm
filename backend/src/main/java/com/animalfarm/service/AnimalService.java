@@ -10,8 +10,11 @@ import com.animalfarm.model.Animal;
 import com.animalfarm.model.Owner;
 import com.animalfarm.repository.AnimalRepository;
 import com.animalfarm.repository.OwnerRepository;
+import java.util.Base64;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.UUID;
+import org.springframework.web.multipart.MultipartFile;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -31,19 +34,18 @@ public class AnimalService {
         this.auditLogService = auditLogService;
     }
 
-    public AnimalSummary registerAnimal(AnimalRequest request, ActorRole role) {
+    public AnimalSummary registerAnimal(AnimalRequest request, MultipartFile imageFile, ActorRole role) {
         RoleValidator.requireAdmin(role);
 
-        Owner owner = ownerRepository.findById(request.ownerId())
+        Owner owner = ownerRepository.findByOwnerId(request.ownerId())
                 .orElseThrow(() -> new ApiException("Owner not found: " + request.ownerId()));
 
         Animal animal = new Animal();
-        animal.setAnimalId(request.animalId());
         animal.setColor(request.color());
         animal.setDateOfBirth(request.dateOfBirth());
         animal.setBreed(request.breed());
         animal.setType(request.type());
-        animal.setImage(request.image());
+        animal.setImage(toImageDataUrl(imageFile));
         animal.setParentId(request.parentId());
         animal.setOwner(owner);
         animal.setSold(false);
@@ -55,29 +57,29 @@ public class AnimalService {
         return animalRepository.findAll().stream().map(AnimalSummary::from).toList();
     }
 
-    public List<AnimalSummary> getByOwner(Long ownerId) {
-        return animalRepository.findByOwnerId(ownerId).stream().map(AnimalSummary::from).toList();
+    public List<AnimalSummary> getByOwner(UUID ownerId) {
+        return animalRepository.findByOwnerOwnerId(ownerId).stream().map(AnimalSummary::from).toList();
     }
 
-    public List<AnimalSummary> getByParent(Long parentId) {
+    public List<AnimalSummary> getByParent(UUID parentId) {
         return animalRepository.findByParentId(parentId).stream().map(AnimalSummary::from).toList();
     }
 
     @Transactional
     public List<AnimalSummary> transferAnimals(TransferAnimalsRequest request, AuthSession actor) {
         ActorRole role = actor.role();
-        Long actorOwnerId = actor.ownerId();
-        Owner toOwner = ownerRepository.findById(request.toOwnerId())
+        UUID actorOwnerId = actor.ownerId();
+        Owner toOwner = ownerRepository.findByOwnerId(request.toOwnerId())
                 .orElseThrow(() -> new ApiException("Destination owner not found: " + request.toOwnerId()));
 
         List<AnimalSummary> transferred = new ArrayList<>();
-        for (Long animalDbId : request.animalIds()) {
-            Animal animal = animalRepository.findById(animalDbId)
-                    .orElseThrow(() -> new ApiException("Animal not found: " + animalDbId));
+        for (UUID animalUuid : request.animalIds()) {
+            Animal animal = animalRepository.findByAnimalId(animalUuid)
+                    .orElseThrow(() -> new ApiException("Animal not found: " + animalUuid));
             if (animal.isSold()) {
                 throw new ApiException("Animal already sold to market: " + animal.getAnimalId());
             }
-            boolean isOwner = actorOwnerId != null && animal.getOwner().getId().equals(actorOwnerId);
+            boolean isOwner = actorOwnerId != null && animal.getOwner().getOwnerId().equals(actorOwnerId);
             if (role != ActorRole.ADMIN && !isOwner) {
                 throw new ApiException("Transfer denied. You are not owner of animal id " + animal.getAnimalId());
             }
@@ -91,15 +93,28 @@ public class AnimalService {
     }
 
     @Transactional
-    public AnimalSummary sellAnimalToMarket(Long animalId, AuthSession actor) {
+    public AnimalSummary sellAnimalToMarket(UUID animalId, AuthSession actor) {
         ActorRole role = actor.role();
         RoleValidator.requireAdmin(role);
 
-        Animal animal = animalRepository.findById(animalId)
+        Animal animal = animalRepository.findByAnimalId(animalId)
                 .orElseThrow(() -> new ApiException("Animal not found: " + animalId));
         animal.setSold(true);
         auditLogService.log(actor, "SELL_ANIMAL",
                 "Sold animal " + animal.getAnimalId() + " (dbId " + animal.getId() + ") to market");
         return AnimalSummary.from(animal);
+    }
+
+    private String toImageDataUrl(MultipartFile imageFile) {
+        if (imageFile == null || imageFile.isEmpty()) {
+            return null;
+        }
+        String contentType = imageFile.getContentType() != null ? imageFile.getContentType() : "application/octet-stream";
+        try {
+            String base64 = Base64.getEncoder().encodeToString(imageFile.getBytes());
+            return "data:" + contentType + ";base64," + base64;
+        } catch (Exception e) {
+            throw new ApiException("Failed to read uploaded image.");
+        }
     }
 }

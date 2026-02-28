@@ -210,3 +210,28 @@ Services in compose:
 
 - This version enforces role-based access from authenticated JWT claims (`OWNER` / `ADMIN`).
 - Transfer and sell operations are written to `audit_logs`.
+
+## UUID Migration (Required For Existing Databases)
+
+This version uses:
+- `owners.id` as internal integer PK, and `owners.owner_id` as UUID business key.
+- `animals.id` as internal integer PK, and `animals.animal_id` as UUID business key.
+- Owner/animal API operations now use UUID values.
+
+If you already have data from older versions, run:
+
+```bash
+mysql -h 127.0.0.1 -P 3307 -u root -proot animalfarm < backend/db/migrations/2026-02-28-uuid-identifier-migration.sql
+```
+
+For Vagrant VM:
+
+```bash
+vagrant ssh -c "cd /opt/animalfarm && docker compose exec -T db mysql -uroot -proot animalfarm < backend/db/migrations/2026-02-28-uuid-identifier-migration.sql"
+```
+
+Then restart the application containers:
+
+```bash
+docker compose up -d --build
+```

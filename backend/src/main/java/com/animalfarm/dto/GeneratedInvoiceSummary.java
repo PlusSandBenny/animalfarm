@@ -1,10 +1,11 @@
 package com.animalfarm.dto;
 
 import java.math.BigDecimal;
+import java.util.UUID;
 
 public record GeneratedInvoiceSummary(
         Long invoiceId,
-        Long ownerId,
+        UUID ownerId,
         String ownerFirstName,
         String ownerEmail,
         Integer periodYear,

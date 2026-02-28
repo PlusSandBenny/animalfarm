@@ -13,6 +13,7 @@ import com.lowagie.text.pdf.PdfWriter;
 import java.io.ByteArrayOutputStream;
 import java.util.List;
 import java.util.Map;
+import java.util.UUID;
 import java.util.stream.Collectors;
 import org.springframework.stereotype.Service;
 
@@ -26,7 +27,7 @@ public class ReportService {
         this.ownerService = ownerService;
     }
 
-    public byte[] ownerVsAnimalPdf(Long ownerId) {
+    public byte[] ownerVsAnimalPdf(UUID ownerId) {
         var owner = ownerService.getOwner(ownerId);
         var animals = animalService.getByOwner(ownerId);
         String title = "Owner vs Animal Report";
@@ -34,14 +35,14 @@ public class ReportService {
         return buildPdf(title, subtitle, animals);
     }
 
-    public byte[] parentVsAnimalPdf(Long parentId) {
+    public byte[] parentVsAnimalPdf(UUID parentId) {
         var animals = animalService.getByParent(parentId);
         String title = "Parent vs Animal Report";
-        String subtitle = "Parent Animal DB Id: " + parentId;
+        String subtitle = "Parent Animal UUID: " + parentId;
         return buildPdf(title, subtitle, animals);
     }
 
-    public byte[] ownerAnimalReportPdf(Long ownerId) {
+    public byte[] ownerAnimalReportPdf(UUID ownerId) {
         var owner = ownerService.getOwner(ownerId);
         var animals = animalService.getByOwner(ownerId);
         String title = "Owner Animal Report";
@@ -60,7 +61,7 @@ public class ReportService {
             document.add(new Paragraph(" "));
             for (Owner owner : owners) {
                 document.add(new Paragraph(
-                        "OwnerId: " + owner.getId()
+                        "OwnerId: " + owner.getOwnerId()
                                 + ", Name: " + owner.getFirstName() + " " + owner.getLastName()
                                 + ", Email: " + owner.getEmail()
                                 + ", Phone: " + owner.getPhoneNumber()
@@ -95,14 +96,14 @@ public class ReportService {
             table.addCell(headerCell("Pigs"));
 
             for (Owner owner : owners) {
-                List<AnimalSummary> animals = animalService.getByOwner(owner.getId());
+                List<AnimalSummary> animals = animalService.getByOwner(owner.getOwnerId());
                 Map<AnimalType, Long> counts = animals.stream()
                         .collect(Collectors.groupingBy(AnimalSummary::type, Collectors.counting()));
                 long cattle = counts.getOrDefault(AnimalType.CATTLE, 0L);
                 long goats = counts.getOrDefault(AnimalType.GOAT, 0L);
                 long rams = counts.getOrDefault(AnimalType.RAM, 0L);
                 long pigs = counts.getOrDefault(AnimalType.PIG, 0L);
-                table.addCell(String.valueOf(owner.getId()));
+                table.addCell(String.valueOf(owner.getOwnerId()));
                 table.addCell(owner.getFirstName());
                 table.addCell(String.valueOf(cattle));
                 table.addCell(String.valueOf(goats));

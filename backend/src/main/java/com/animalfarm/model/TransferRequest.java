@@ -16,6 +16,9 @@ import jakarta.persistence.Table;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.UUID;
+import org.hibernate.annotations.JdbcTypeCode;
+import org.hibernate.type.SqlTypes;
 
 @Entity
 @Table(name = "transfer_requests")
@@ -34,8 +37,9 @@ public class TransferRequest {
 
     @ElementCollection
     @CollectionTable(name = "transfer_request_animals", joinColumns = @JoinColumn(name = "request_id"))
-    @Column(name = "animal_id")
-    private List<Long> animalIds = new ArrayList<>();
+    @Column(name = "animal_id", length = 36)
+    @JdbcTypeCode(SqlTypes.CHAR)
+    private List<UUID> animalIds = new ArrayList<>();
 
     @Column(nullable = false, length = 1000)
     private String ownerEmailMessage;
@@ -67,11 +71,11 @@ public class TransferRequest {
         this.toOwner = toOwner;
     }
 
-    public List<Long> getAnimalIds() {
+    public List<UUID> getAnimalIds() {
         return animalIds;
     }
 
-    public void setAnimalIds(List<Long> animalIds) {
+    public void setAnimalIds(List<UUID> animalIds) {
         this.animalIds = animalIds;
     }
 

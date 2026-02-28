@@ -12,6 +12,7 @@ import com.animalfarm.service.OwnerService;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.validation.Valid;
 import java.util.List;
+import java.util.UUID;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -37,7 +38,7 @@ public class OwnerController {
     }
 
     @GetMapping("/{ownerId}")
-    public Owner getOwner(@PathVariable Long ownerId, HttpServletRequest httpRequest) {
+    public Owner getOwner(@PathVariable UUID ownerId, HttpServletRequest httpRequest) {
         AuthSession session = AuthContext.require(httpRequest);
         if (session.role() == ActorRole.OWNER && (session.ownerId() == null || !session.ownerId().equals(ownerId))) {
             throw new ApiException("Owner can only access own profile.");
@@ -47,7 +48,7 @@ public class OwnerController {
 
     @GetMapping("/search")
     public List<OwnerSummary> searchOwners(
-            @RequestParam(required = false) Long ownerId,
+            @RequestParam(required = false) UUID ownerId,
             @RequestParam(required = false) String firstName,
             HttpServletRequest httpRequest
     ) {
@@ -57,7 +58,7 @@ public class OwnerController {
 
     @PutMapping("/{ownerId}")
     public OwnerSummary updateOwner(
-            @PathVariable Long ownerId,
+            @PathVariable UUID ownerId,
             @Valid @RequestBody OwnerUpdateRequest request,
             HttpServletRequest httpRequest
     ) {

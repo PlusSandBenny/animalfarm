@@ -17,6 +17,7 @@ import com.animalfarm.repository.OwnerRepository;
 import java.time.LocalDate;
 import java.util.List;
 import java.util.Optional;
+import java.util.UUID;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -45,67 +46,69 @@ class AnimalServiceTest {
 
     @Test
     void registerAnimal_requiresAdminRole() {
+        UUID ownerUuid = UUID.randomUUID();
         AnimalRequest request = new AnimalRequest(
-                "A-001",
                 "Brown",
                 LocalDate.of(2022, 1, 1),
                 "Boran",
                 AnimalType.CATTLE,
                 null,
-                null,
-                1L
+                ownerUuid
         );
 
-        ApiException ex = assertThrows(ApiException.class, () -> animalService.registerAnimal(request, ActorRole.OWNER));
+        ApiException ex = assertThrows(ApiException.class, () -> animalService.registerAnimal(request, null, ActorRole.OWNER));
         assertEquals("This action requires ADMIN role.", ex.getMessage());
     }
 
     @Test
     void transferAnimals_ownerCanTransferOwnAnimal() {
-        Owner fromOwner = owner(1L);
-        Owner toOwner = owner(2L);
-        Animal animal = animal(10L, "A-010", fromOwner, false);
+        Owner fromOwner = owner(1L, UUID.randomUUID());
+        Owner toOwner = owner(2L, UUID.randomUUID());
+        UUID animalUuid = UUID.randomUUID();
+        Animal animal = animal(10L, animalUuid, fromOwner, false);
 
-        when(ownerRepository.findById(2L)).thenReturn(Optional.of(toOwner));
-        when(animalRepository.findById(10L)).thenReturn(Optional.of(animal));
+        when(ownerRepository.findByOwnerId(toOwner.getOwnerId())).thenReturn(Optional.of(toOwner));
+        when(animalRepository.findByAnimalId(animalUuid)).thenReturn(Optional.of(animal));
 
         var result = animalService.transferAnimals(new TransferAnimalsRequest(
-                2L,
-                List.of(10L)
-        ), new AuthSession(1L, "owner1", ActorRole.OWNER, 1L, false));
+                toOwner.getOwnerId(),
+                List.of(animalUuid)
+        ), new AuthSession(1L, "owner1", ActorRole.OWNER, fromOwner.getOwnerId(), false));
 
         assertEquals(1, result.size());
         assertEquals(2L, animal.getOwner().getId());
-        assertEquals(2L, result.get(0).ownerId());
+        assertEquals(toOwner.getOwnerId(), result.get(0).ownerId());
     }
 
     @Test
     void transferAnimals_nonOwnerDeniedWhenNotAdmin() {
-        Owner realOwner = owner(1L);
-        Owner toOwner = owner(2L);
-        Animal animal = animal(11L, "A-011", realOwner, false);
+        Owner realOwner = owner(1L, UUID.randomUUID());
+        Owner toOwner = owner(2L, UUID.randomUUID());
+        UUID animalUuid = UUID.randomUUID();
+        Animal animal = animal(11L, animalUuid, realOwner, false);
 
-        when(ownerRepository.findById(2L)).thenReturn(Optional.of(toOwner));
-        when(animalRepository.findById(11L)).thenReturn(Optional.of(animal));
+        when(ownerRepository.findByOwnerId(toOwner.getOwnerId())).thenReturn(Optional.of(toOwner));
+        when(animalRepository.findByAnimalId(animalUuid)).thenReturn(Optional.of(animal));
 
         ApiException ex = assertThrows(ApiException.class, () -> animalService.transferAnimals(new TransferAnimalsRequest(
-                2L,
-                List.of(11L)
-        ), new AuthSession(2L, "owner2", ActorRole.OWNER, 99L, false)));
+                toOwner.getOwnerId(),
+                List.of(animalUuid)
+        ), new AuthSession(2L, "owner2", ActorRole.OWNER, UUID.randomUUID(), false)));
 
-        assertEquals("Transfer denied. You are not owner of animal id A-011", ex.getMessage());
+        assertEquals("Transfer denied. You are not owner of animal id " + animalUuid, ex.getMessage());
     }
 
     @Test
     void sellAnimal_requiresAdminRole() {
         ApiException ex = assertThrows(ApiException.class, () ->
-                animalService.sellAnimalToMarket(12L, new AuthSession(1L, "owner1", ActorRole.OWNER, 1L, false)));
+                animalService.sellAnimalToMarket(UUID.randomUUID(), new AuthSession(1L, "owner1", ActorRole.OWNER, UUID.randomUUID(), false)));
         assertEquals("This action requires ADMIN role.", ex.getMessage());
     }
 
-    private static Owner owner(Long id) {
+    private static Owner owner(Long id, UUID ownerId) {
         Owner owner = new Owner();
         ReflectionTestUtils.setField(owner, "id", id);
+        ReflectionTestUtils.setField(owner, "ownerId", ownerId);
         owner.setFirstName("First");
         owner.setLastName("Last");
         owner.setEmail("owner" + id + "@example.com");
@@ -114,7 +117,7 @@ class AnimalServiceTest {
         return owner;
     }
 
-    private static Animal animal(Long id, String animalId, Owner owner, boolean sold) {
+    private static Animal animal(Long id, UUID animalId, Owner owner, boolean sold) {
         Animal animal = new Animal();
         ReflectionTestUtils.setField(animal, "id", id);
         animal.setAnimalId(animalId);

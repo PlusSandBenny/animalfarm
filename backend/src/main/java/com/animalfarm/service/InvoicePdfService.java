@@ -18,7 +18,7 @@ public class InvoicePdfService {
             document.open();
             document.add(new Paragraph("Owner Monthly Invoice"));
             document.add(new Paragraph("Invoice ID: " + invoice.getId()));
-            document.add(new Paragraph("Owner ID: " + invoice.getOwner().getId()));
+            document.add(new Paragraph("Owner ID: " + invoice.getOwner().getOwnerId()));
             document.add(new Paragraph("First Name: " + invoice.getOwner().getFirstName()));
             document.add(new Paragraph("Email: " + invoice.getOwner().getEmail()));
             document.add(new Paragraph("Period: " + invoice.getPeriodYear() + "-" + String.format("%02d", invoice.getPeriodMonth())));

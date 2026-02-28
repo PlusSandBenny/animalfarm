@@ -11,6 +11,7 @@ import java.time.Instant;
 import java.time.LocalDateTime;
 import java.time.ZoneOffset;
 import java.util.Date;
+import java.util.UUID;
 import javax.crypto.SecretKey;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
@@ -31,14 +32,14 @@ public class JwtTokenService {
         this.refreshTokenDays = refreshTokenDays;
     }
 
-    public String generateAccessToken(Long userId, String username, ActorRole role, Long ownerId, boolean mustChangePassword) {
+    public String generateAccessToken(Long userId, String username, ActorRole role, UUID ownerId, boolean mustChangePassword) {
         Instant now = Instant.now();
         Instant expiry = now.plusSeconds(accessTokenMinutes * 60);
         return Jwts.builder()
                 .subject(String.valueOf(userId))
                 .claim("username", username)
                 .claim("role", role.name())
-                .claim("ownerId", ownerId)
+                .claim("ownerId", ownerId != null ? ownerId.toString() : null)
                 .claim("mustChangePassword", mustChangePassword)
                 .claim("typ", "access")
                 .issuedAt(Date.from(now))

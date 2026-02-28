@@ -11,6 +11,7 @@ import jakarta.servlet.http.HttpServletRequest;
 import jakarta.validation.Valid;
 import java.time.YearMonth;
 import java.util.List;
+import java.util.UUID;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
@@ -32,7 +33,7 @@ public class InvoiceController {
     }
 
     @GetMapping("/monthly/owner/{ownerId}")
-    public MonthlyInvoiceResponse monthlyOwnerInvoice(@PathVariable Long ownerId, HttpServletRequest httpRequest) {
+    public MonthlyInvoiceResponse monthlyOwnerInvoice(@PathVariable UUID ownerId, HttpServletRequest httpRequest) {
         AuthSession session = AuthContext.require(httpRequest);
         return monthlyInvoiceService.generateForOwner(ownerId, session.role(), session.ownerId());
     }
@@ -63,7 +64,7 @@ public class InvoiceController {
 
     @GetMapping("/history")
     public List<InvoiceHistoryResponse> history(
-            @RequestParam(required = false) Long ownerId,
+            @RequestParam(required = false) UUID ownerId,
             @RequestParam(required = false) Integer year,
             @RequestParam(required = false) Integer month,
             HttpServletRequest httpRequest
@@ -85,7 +86,7 @@ public class InvoiceController {
 
     @GetMapping("/history/zip")
     public ResponseEntity<byte[]> downloadZip(
-            @RequestParam(required = false) Long ownerId,
+            @RequestParam(required = false) UUID ownerId,
             @RequestParam(required = false) Integer year,
             @RequestParam(required = false) Integer month,
             HttpServletRequest httpRequest

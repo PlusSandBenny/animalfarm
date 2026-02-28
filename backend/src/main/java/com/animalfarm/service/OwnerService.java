@@ -13,6 +13,7 @@ import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import java.util.List;
+import java.util.UUID;
 
 @Service
 public class OwnerService {
@@ -55,8 +56,8 @@ public class OwnerService {
         return savedOwner;
     }
 
-    public Owner getOwner(Long ownerId) {
-        return ownerRepository.findById(ownerId)
+    public Owner getOwner(UUID ownerId) {
+        return ownerRepository.findByOwnerId(ownerId)
                 .orElseThrow(() -> new ApiException("Owner not found: " + ownerId));
     }
 
@@ -64,7 +65,7 @@ public class OwnerService {
         return ownerRepository.findAll();
     }
 
-    public List<OwnerSummary> searchOwners(Long ownerId, String firstName, ActorRole role) {
+    public List<OwnerSummary> searchOwners(UUID ownerId, String firstName, ActorRole role) {
         RoleValidator.requireAdmin(role);
         if (ownerId != null) {
             return List.of(toSummary(getOwner(ownerId)));
@@ -79,7 +80,7 @@ public class OwnerService {
     }
 
     @Transactional
-    public OwnerSummary updateOwner(Long ownerId, OwnerUpdateRequest request, ActorRole role) {
+    public OwnerSummary updateOwner(UUID ownerId, OwnerUpdateRequest request, ActorRole role) {
         RoleValidator.requireAdmin(role);
         Owner owner = getOwner(ownerId);
         owner.setFirstName(request.firstName());
@@ -87,7 +88,7 @@ public class OwnerService {
         owner.setEmail(request.email());
         owner.setPhoneNumber(request.phoneNumber());
         owner.setAddress(request.address());
-        AppUser user = appUserRepository.findByOwnerId(ownerId).orElse(null);
+        AppUser user = appUserRepository.findByOwnerOwnerId(ownerId).orElse(null);
         String requestedUsername = request.username() != null ? request.username().trim() : "";
         String requestedTempPassword = request.temporaryPassword() != null ? request.temporaryPassword().trim() : "";
 
@@ -118,7 +119,7 @@ public class OwnerService {
     }
 
     private OwnerSummary toSummary(Owner owner) {
-        String username = appUserRepository.findByOwnerId(owner.getId())
+        String username = appUserRepository.findByOwnerOwnerId(owner.getOwnerId())
                 .map(AppUser::getUsername)
                 .orElse(null);
         return OwnerSummary.of(owner, username);
