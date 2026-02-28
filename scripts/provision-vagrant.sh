@@ -42,6 +42,7 @@ else
 fi
 
 cd "${APP_DIR}"
+mkdir -p "${APP_DIR}/logs/backend"
 docker compose up -d --build
 
 echo "Animal Farm stack deployed in VM."

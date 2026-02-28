@@ -211,6 +211,19 @@ Services in compose:
 - This version enforces role-based access from authenticated JWT claims (`OWNER` / `ADMIN`).
 - Transfer and sell operations are written to `audit_logs`.
 
+## Error Log Location
+
+Backend error logs are written to:
+
+- Container path: `/var/log/animalfarm/error.log`
+- Project path on VM/host (via compose volume): `logs/backend/error.log`
+
+To change the log file location, set environment variable:
+
+```bash
+APP_ERROR_LOG_FILE=/your/path/error.log
+```
+
 ## UUID Migration (Required For Existing Databases)
 
 This version uses:

@@ -68,6 +68,7 @@ Vagrant.configure("2") do |config|
 
         COMPOSE_DIR="$(dirname "${COMPOSE_PATH}")"
         cd "${COMPOSE_DIR}"
+        mkdir -p "${COMPOSE_DIR}/logs/backend"
 
         ATTEMPTS=3
         for i in $(seq 1 ${ATTEMPTS}); do
