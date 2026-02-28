@@ -38,4 +38,7 @@ app:
 logging:
   level:
     org.springframework.mail: DEBUG
+    org.eclipse.angus.mail: DEBUG
     jakarta.mail: DEBUG
+    com.sun.mail: DEBUG
+    javax.mail: DEBUG
