@@ -27,6 +27,7 @@ services:
       SPRING_DATASOURCE_PASSWORD: root
       SERVER_PORT: 8080
       APP_ERROR_LOG_FILE: /var/log/animalfarm/error.log
+      APP_LOG_FILE: /var/log/animalfarm/application.log
     depends_on:
       db:
         condition: service_healthy

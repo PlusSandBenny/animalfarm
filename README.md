@@ -217,11 +217,15 @@ Backend error logs are written to:
 
 - Container path: `/var/log/animalfarm/error.log`
 - Project path on VM/host (via compose volume): `logs/backend/error.log`
+- General application logs:
+  - Container path: `/var/log/animalfarm/application.log`
+  - Project path on VM/host: `logs/backend/application.log`
 
 To change the log file location, set environment variable:
 
 ```bash
 APP_ERROR_LOG_FILE=/your/path/error.log
+APP_LOG_FILE=/your/path/application.log
 ```
 
 ## UUID Migration (Required For Existing Databases)
