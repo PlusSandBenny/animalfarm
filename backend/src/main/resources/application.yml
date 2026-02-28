@@ -34,3 +34,8 @@ app:
     admin-password: ${APP_AUTH_ADMIN_PASSWORD:admin123}
   invoice:
     from-email: ${APP_INVOICE_FROM_EMAIL:no-reply@animalfarm.local}
+
+logging:
+  level:
+    org.springframework.mail: DEBUG
+    jakarta.mail: DEBUG
