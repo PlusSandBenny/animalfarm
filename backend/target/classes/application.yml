@@ -17,7 +17,7 @@ spring:
     host: ${SPRING_MAIL_HOST:smtp.mail.com}
     port: ${SPRING_MAIL_PORT:587}
     username: ${SPRING_MAIL_USERNAME:areola.benjamin@mail.com}
-    password: ${SPRING_MAIL_PASSWORD:P30pl3@people}
+    password: ${SPRING_MAIL_PASSWORD:}
     properties:
       mail:
         smtp:

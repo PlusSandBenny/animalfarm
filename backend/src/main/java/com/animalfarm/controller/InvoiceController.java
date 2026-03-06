@@ -52,7 +52,8 @@ public class InvoiceController {
         AuthSession session = AuthContext.require(httpRequest);
         Integer year = request == null ? null : request.year();
         Integer month = request == null ? null : request.month();
-        return monthlyInvoiceService.generateAndEmailAllOwners(year, month, session.role());
+        String smtpPassword = request == null ? null : request.smtpPassword();
+        return monthlyInvoiceService.generateAndEmailAllOwners(year, month, smtpPassword, session.role());
     }
 
     @PostMapping("/{invoiceId}/mark-paid")

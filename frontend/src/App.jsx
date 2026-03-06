@@ -142,6 +142,7 @@ function AdminPage({ session, onLogout }) {
   const [ownerInvoice, setOwnerInvoice] = useState(null);
   const [allOwnersInvoices, setAllOwnersInvoices] = useState([]);
   const [generationPeriod, setGenerationPeriod] = useState(defaultInvoicePeriod);
+  const [smtpPassword, setSmtpPassword] = useState("");
   const [generatedInvoices, setGeneratedInvoices] = useState([]);
   const [invoiceHistoryFilters, setInvoiceHistoryFilters] = useState({ ownerId: "", year: "", month: "" });
   const [invoiceHistory, setInvoiceHistory] = useState([]);
@@ -342,12 +343,14 @@ function AdminPage({ session, onLogout }) {
     try {
       const payload = {
         year: Number(generationPeriod.year),
-        month: Number(generationPeriod.month)
+        month: Number(generationPeriod.month),
+        smtpPassword: smtpPassword || null
       };
       const generated = await api.generateAndEmailMonthlyInvoices(payload);
       setGeneratedInvoices(generated);
       const history = await api.getInvoiceHistory(payload);
       setInvoiceHistory(history);
+      setSmtpPassword("");
       setMessage(`Generated ${generated.length} invoice(s) and attempted email delivery.`);
     } catch (err) {
       setMessage(err.message);
@@ -528,6 +531,12 @@ function AdminPage({ session, onLogout }) {
                 value={generationPeriod.month}
                 onChange={(e) => setGenerationPeriod({ ...generationPeriod, month: e.target.value })}
                 required
+              />
+              <input
+                type="password"
+                placeholder="SMTP Password (for this run)"
+                value={smtpPassword}
+                onChange={(e) => setSmtpPassword(e.target.value)}
               />
               <button type="submit">Generate and Send</button>
             </form>

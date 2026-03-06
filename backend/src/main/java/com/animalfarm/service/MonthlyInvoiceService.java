@@ -64,11 +64,11 @@ public class MonthlyInvoiceService {
     }
 
     @Transactional
-    public List<GeneratedInvoiceSummary> generateAndEmailAllOwners(Integer year, Integer month, ActorRole role) {
+    public List<GeneratedInvoiceSummary> generateAndEmailAllOwners(Integer year, Integer month, String smtpPassword, ActorRole role) {
         RoleValidator.requireAdmin(role);
         YearMonth ym = (year != null && month != null) ? YearMonth.of(year, month) : YearMonth.now();
         InvoiceParameter p = invoiceParameterService.getInternal();
-        return ownerService.listOwners().stream().map(owner -> generateSingle(owner, ym, p)).toList();
+        return ownerService.listOwners().stream().map(owner -> generateSingle(owner, ym, p, smtpPassword)).toList();
     }
 
     @Transactional
@@ -111,13 +111,13 @@ public class MonthlyInvoiceService {
         }
     }
 
-    private GeneratedInvoiceSummary generateSingle(Owner owner, YearMonth ym, InvoiceParameter p) {
+    private GeneratedInvoiceSummary generateSingle(Owner owner, YearMonth ym, InvoiceParameter p, String smtpPassword) {
         OwnerInvoice invoice = ownerInvoiceRepository.findByOwnerIdAndPeriodYearAndPeriodMonth(owner.getId(), ym.getYear(), ym.getMonthValue())
                 .orElseGet(() -> createInvoice(owner, ym, p));
 
         if (!invoice.isEmailSent()) {
             try {
-                invoiceEmailService.sendOwnerInvoice(invoice);
+                invoiceEmailService.sendOwnerInvoice(invoice, smtpPassword);
                 invoice.setEmailSent(true);
                 invoice.setEmailError(null);
                 invoice.setSentAt(LocalDateTime.now());
